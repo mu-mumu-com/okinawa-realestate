@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>沖縄不動産 新着まとめ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --ocean: #005f73; --ocean2: #0a9396; --sky: #94d2bd;
+  --red: #ca6702; --dark: #001219;
+  --text: #1a1a2e; --muted: #6b7c93; --bg: #f4f9fb;
+  --card: #ffffff; --border: #ddeaf0;
+}
+body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); }
+header {
+  background: linear-gradient(135deg, var(--dark), var(--ocean));
+  padding: 0 16px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 34px; height: 34px; background: var(--ocean2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.logo-text { color: white; font-size: 15px; font-weight: 700; }
+.logo-sub { color: var(--sky); font-size: 10px; }
+.btn-update { background: var(--ocean2); color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; }
+.stats-bar { background: white; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; gap: 0; }
+.stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.stat-num { font-size: 22px; font-weight: 900; color: var(--ocean); }
+.stat-label { font-size: 10px; color: var(--muted); }
+.stat-divider { width: 1px; background: var(--border); margin: 4px 0; }
+.filter-section { background: white; border-bottom: 1px solid var(--border); padding: 12px 16px; }
+.filter-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.filter-label { font-size: 11px; font-weight: 600; color: var(--muted); min-width: 32px; }
+.filter-btn { padding: 5px 12px; border-radius: 16px; border: 1.5px solid var(--border); background: white; font-size: 11px; font-family: inherit; cursor: pointer; color: var(--text); font-weight: 500; }
+.filter-btn.active { background: var(--ocean); color: white; border-color: var(--ocean); }
+.filter-select { padding: 5px 10px; border-radius: 6px; border: 1.5px solid var(--border); font-size: 11px; font-family: inherit; color: var(--text); background: white; }
+main { padding: 16px; max-width: 800px; margin: 0 auto; }
+.section-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.cards { display: flex; flex-direction: column; gap: 12px; }
+@media (min-width: 600px) { .cards { display: grid; grid-template-columns: 1fr 1fr; } }
+@media (min-width: 900px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+.card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; }
+.card-inner { display: flex; }
+.card-thumb { width: 100px; min-width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; flex-shrink: 0; }
+@media (min-width: 600px) { .card-inner { flex-direction: column; } .card-thumb { width: 100%; height: 140px; font-size: 48px; } }
+.card-badges { position: absolute; top: 6px; left: 6px; display: flex; flex-direction: column; gap: 3px; }
+.badge { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; }
+.badge-new { background: var(--red); color: white; }
+.badge-buy { background: var(--ocean); color: white; }
+.badge-invest { background: #5a189a; color: white; }
+.badge-site { background: rgba(0,0,0,0.55); color: white; }
+.card-body { padding: 10px 12px; flex: 1; }
+.card-price { font-size: 16px; font-weight: 900; color: var(--ocean); }
+.card-yield { font-size: 11px; color: var(--red); font-weight: 700; margin-bottom: 3px; }
+.card-name { font-size: 12px; font-weight: 700; margin-bottom: 5px; line-height: 1.4; }
+.card-meta { font-size: 11px; color: var(--muted); margin-bottom: 2px; display: flex; flex-wrap: wrap; gap: 8px; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 6px; }
+.card-time { font-size: 10px; color: var(--muted); }
+.card-link { font-size: 11px; font-weight: 600; text-decoration: none; color: var(--ocean2); }
+.bg-suumo{background:#e8f5ec}.bg-homes{background:#fdecea}.bg-goohome{background:#e8f0fd}.bg-uchina{background:#fff3e0}.bg-athome{background:#fde8e8}
+.src-suumo{color:#00a040}.src-homes{color:#e63312}.src-goohome{color:#0066cc}.src-uchina{color:#e07b00}.src-athome{color:#c00000}
+footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 24px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏠</div>
+    <div>
+      <div class="logo-text">沖縄不動産 新着まとめ</div>
+      <div class="logo-sub">OKINAWA REAL ESTATE DASHBOARD</div>
+    </div>
+  </div>
+  <button class="btn-update" onclick="alert('実際のアプリでは新着を取得します')">🔄 更新</button>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">表示中</div></div>
+  <div class="stat-divider"></div>
+  <div class="stat"><div class="stat-num" style="color:#5a189a" id="statInvest">0</div><div class="stat-label">収益</div></div>
+  <div class="stat-divider"></div>
+  <div class="stat"><div class="stat-num" style="color:var(--red)" id="statBuy">0</div><div class="stat-label">売買</div></div>
+  <div class="stat-divider"></div>
+  <div class="stat"><div class="stat-num" style="color:#ee9b00">5</div><div class="stat-label">連携中</div></div>
+</div>
+
+<div class="filter-section">
+  <div class="filter-row">
+    <span class="filter-label">種別</span>
+    <button class="filter-btn active" data-type="all">すべて</button>
+    <button class="filter-btn" data-type="buy">売買</button>
+    <button class="filter-btn" data-type="invest">収益物件</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">サイト</span>
+    <button class="filter-btn active" data-site="all">すべて</button>
+    <button class="filter-btn src-suumo" data-site="suumo">SUUMO</button>
+    <button class="filter-btn src-homes" data-site="homes">HOME'S</button>
+    <button class="filter-btn src-goohome" data-site="goohome">グーホーム</button>
+    <button class="filter-btn src-uchina" data-site="uchina">うちなーらいふ</button>
+    <button class="filter-btn src-athome" data-site="athome">アットホーム</button>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">価格</span>
+    <select class="filter-select" id="priceFilter">
+      <option value="0">上限なし</option>
+      <option value="1000">〜1,000万</option>
+      <option value="3000">〜3,000万</option>
+      <option value="5000">〜5,000万</option>
+      <option value="10000">〜1億</option>
+    </select>
+  </div>
+</div>
+
+<main>
+  <div class="section-title">新着物件一覧</div>
+  <div class="cards" id="cardGrid"></div>
+</main>
+
+<footer>※ 各不動産サイトの公式通知・RSSを元に自動集計しています（デモ版）</footer>
+
+<script>
+const DATA = [
+  {type:'invest',site:'goohome',siteName:'グーホーム',name:'那覇市前島 一棟マンション',area:'那覇市前島',price:8500,label:'8,500万円',yield:'利回り 7.2%',rooms:'1K×12戸',age:'築8年',size:'延床452㎡',time:'1時間前',emoji:'🏢',isNew:true},
+  {type:'buy',site:'suumo',siteName:'SUUMO',name:'サンシャイン北谷 中古マンション',area:'北谷町美浜',price:2480,label:'2,480万円',yield:null,rooms:'3LDK',age:'築12年',size:'75.3㎡',time:'2時間前',emoji:'🌊',isNew:true},
+  {type:'invest',site:'homes',siteName:"HOME'S",name:'沖縄市一棟アパート',area:'沖縄市照屋',price:4200,label:'4,200万円',yield:'利回り 9.1%',rooms:'1K×8戸',age:'築15年',size:'延床280㎡',time:'3時間前',emoji:'🏘️',isNew:false},
+  {type:'buy',site:'uchina',siteName:'うちなーらいふ',name:'浦添市前田 新築一戸建て',area:'浦添市前田',price:3980,label:'3,980万円',yield:null,rooms:'4LDK',age:'新築',size:'105.2㎡',time:'4時間前',emoji:'🏡',isNew:true},
+  {type:'invest',site:'goohome',siteName:'グーホーム',name:'うるま市兼箇段 売アパート',area:'うるま市兼箇段',price:13800,label:'1億3,800万円',yield:'利回り 6.0%',rooms:'2LDK×8・他',age:'築21年',size:'延床856㎡',time:'5時間前',emoji:'🏢',isNew:false},
+  {type:'buy',site:'athome',siteName:'アットホーム',name:'宜野湾市大謝名 中古戸建',area:'宜野湾市大謝名',price:1980,label:'1,980万円',yield:null,rooms:'3LDK',age:'築22年',size:'88.6㎡',time:'6時間前',emoji:'🏠',isNew:true},
+  {type:'invest',site:'homes',siteName:"HOME'S",name:'恩納村 オーシャンビューコンドミニアム',area:'恩納村恩納',price:2980,label:'2,980万円',yield:'利回り 5.8%',rooms:'1LDK',age:'築6年',size:'52.1㎡',time:'7時間前',emoji:'🌺',isNew:false},
+  {type:'buy',site:'suumo',siteName:'SUUMO',name:'豊見城市豊崎 売地',area:'豊見城市豊崎',price:890,label:'890万円',yield:null,rooms:'土地',age:'─',size:'200.5㎡',time:'8時間前',emoji:'🌿',isNew:true},
+];
+
+let selType='all', selSite='all';
+
+function render() {
+  const maxPrice = parseInt(document.getElementById('priceFilter').value)||0;
+  const list = DATA.filter(p => {
+    if (selType!=='all' && p.type!==selType) return false;
+    if (selSite!=='all' && p.site!==selSite) return false;
+    if (maxPrice>0 && p.price>maxPrice) return false;
+    return true;
+  });
+  document.getElementById('statTotal').textContent = list.length;
+  document.getElementById('statInvest').textContent = list.filter(p=>p.type==='invest').length;
+  document.getElementById('statBuy').textContent = list.filter(p=>p.type==='buy').length;
+  const grid = document.getElementById('cardGrid');
+  if (!list.length) { grid.innerHTML='<p style="text-align:center;color:#6b7c93;padding:40px">条件に一致する物件がありません</p>'; return; }
+  grid.innerHTML = list.map(p=>`
+    <div class="card" onclick="window.open('${p.link||'#'}','_blank')">
+      <div class="card-inner">
+        <div class="card-thumb bg-${p.site}">
+          <span>${p.emoji}</span>
+          <div class="card-badges">
+            ${p.isNew?'<span class="badge badge-new">NEW</span>':''}
+            <span class="badge ${p.type==='invest'?'badge-invest':'badge-buy'}">${p.type==='invest'?'収益':'売買'}</span>
+            <span class="badge badge-site">${p.siteName}</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-price">${p.label}</div>
+          ${p.yield?`<div class="card-yield">📈 ${p.yield}</div>`:''}
+          <div class="card-name">${p.name}</div>
+          <div class="card-meta"><span>📍 ${p.area}</span><span>🏠 ${p.rooms}</span></div>
+          <div class="card-meta"><span>🗓 ${p.age}</span><span>📐 ${p.size}</span></div>
+          <div class="card-footer">
+            <div class="card-time">🕐 ${p.time}</div>
+            <a class="card-link src-${p.site}" href="#" onclick="event.stopPropagation()">${p.siteName} →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+document.querySelectorAll('[data-type]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-type]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); selType=btn.dataset.type; render();
+  });
+});
+document.querySelectorAll('[data-site]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-site]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); selSite=btn.dataset.site; render();
+  });
+});
+document.getElementById('priceFilter').addEventListener('change', render);
+render();
+</script>
+</body>
+</html>
