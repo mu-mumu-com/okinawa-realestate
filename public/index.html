@@ -26,43 +26,51 @@ header {
 .logo-text { color: white; font-size: 15px; font-weight: 700; }
 .logo-sub { color: var(--sky); font-size: 10px; }
 .btn-update { background: var(--ocean2); color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; }
-.stats-bar { background: white; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; gap: 0; }
+.btn-update:disabled { opacity: 0.6; }
+.stats-bar { background: white; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; }
 .stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
 .stat-num { font-size: 22px; font-weight: 900; color: var(--ocean); }
 .stat-label { font-size: 10px; color: var(--muted); }
 .stat-divider { width: 1px; background: var(--border); margin: 4px 0; }
+.last-update { background: white; border-bottom: 1px solid var(--border); padding: 6px 16px; font-size: 11px; color: var(--muted); text-align: right; }
 .filter-section { background: white; border-bottom: 1px solid var(--border); padding: 12px 16px; }
 .filter-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.filter-row:last-child { margin-bottom: 0; }
 .filter-label { font-size: 11px; font-weight: 600; color: var(--muted); min-width: 32px; }
 .filter-btn { padding: 5px 12px; border-radius: 16px; border: 1.5px solid var(--border); background: white; font-size: 11px; font-family: inherit; cursor: pointer; color: var(--text); font-weight: 500; }
 .filter-btn.active { background: var(--ocean); color: white; border-color: var(--ocean); }
-.filter-select { padding: 5px 10px; border-radius: 6px; border: 1.5px solid var(--border); font-size: 11px; font-family: inherit; color: var(--text); background: white; }
 main { padding: 16px; max-width: 800px; margin: 0 auto; }
 .section-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 .cards { display: flex; flex-direction: column; gap: 12px; }
 @media (min-width: 600px) { .cards { display: grid; grid-template-columns: 1fr 1fr; } }
 @media (min-width: 900px) { .cards { grid-template-columns: repeat(3, 1fr); } }
-.card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; }
+.card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; transition: box-shadow 0.2s; }
+.card:hover { box-shadow: 0 6px 24px rgba(0,95,115,0.12); }
+.card.sold { opacity: 0.6; }
 .card-inner { display: flex; }
-.card-thumb { width: 100px; min-width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; flex-shrink: 0; }
+.card-thumb { width: 100px; min-width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 36px; position: relative; flex-shrink: 0; background: #e8f4f6; }
 @media (min-width: 600px) { .card-inner { flex-direction: column; } .card-thumb { width: 100%; height: 140px; font-size: 48px; } }
 .card-badges { position: absolute; top: 6px; left: 6px; display: flex; flex-direction: column; gap: 3px; }
 .badge { padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; }
-.badge-new { background: var(--red); color: white; }
-.badge-buy { background: var(--ocean); color: white; }
-.badge-invest { background: #5a189a; color: white; }
+.badge-selling { background: var(--ocean); color: white; }
+.badge-sold { background: #888; color: white; }
 .badge-site { background: rgba(0,0,0,0.55); color: white; }
 .card-body { padding: 10px 12px; flex: 1; }
-.card-price { font-size: 16px; font-weight: 900; color: var(--ocean); }
-.card-yield { font-size: 11px; color: var(--red); font-weight: 700; margin-bottom: 3px; }
+.card-price { font-size: 16px; font-weight: 900; color: var(--ocean); margin-bottom: 4px; }
 .card-name { font-size: 12px; font-weight: 700; margin-bottom: 5px; line-height: 1.4; }
-.card-meta { font-size: 11px; color: var(--muted); margin-bottom: 2px; display: flex; flex-wrap: wrap; gap: 8px; }
-.card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 6px; }
+.card-meta { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+.card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 6px; gap: 4px; flex-wrap: wrap; }
 .card-time { font-size: 10px; color: var(--muted); }
+.card-actions { display: flex; gap: 4px; align-items: center; }
 .card-link { font-size: 11px; font-weight: 600; text-decoration: none; color: var(--ocean2); }
-.bg-suumo{background:#e8f5ec}.bg-homes{background:#fdecea}.bg-goohome{background:#e8f0fd}.bg-uchina{background:#fff3e0}.bg-athome{background:#fde8e8}
-.src-suumo{color:#00a040}.src-homes{color:#e63312}.src-goohome{color:#0066cc}.src-uchina{color:#e07b00}.src-athome{color:#c00000}
+.btn-heart { background: none; border: none; cursor: pointer; font-size: 18px; padding: 0; line-height: 1; }
+.btn-sold { font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid #e05c3a; background: white; color: #e05c3a; cursor: pointer; font-family: inherit; font-weight: 600; }
+.btn-sold:hover { background: #e05c3a; color: white; }
+.btn-unsold { font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid #888; background: white; color: #888; cursor: pointer; font-family: inherit; }
+.btn-unsold:hover { background: #888; color: white; }
+.empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
+.loading { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
 footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 24px; }
 </style>
 </head>
@@ -75,101 +83,159 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
       <div class="logo-sub">OKINAWA REAL ESTATE DASHBOARD</div>
     </div>
   </div>
-  <button class="btn-update" onclick="alert('実際のアプリでは新着を取得します')">🔄 更新</button>
+  <button class="btn-update" id="updateBtn" onclick="fetchMails()">🔄 新着取得</button>
 </header>
 
 <div class="stats-bar">
-  <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">表示中</div></div>
+  <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">総物件数</div></div>
   <div class="stat-divider"></div>
-  <div class="stat"><div class="stat-num" style="color:#5a189a" id="statInvest">0</div><div class="stat-label">収益</div></div>
+  <div class="stat"><div class="stat-num" style="color:var(--ocean2)" id="statSelling">0</div><div class="stat-label">販売中</div></div>
   <div class="stat-divider"></div>
-  <div class="stat"><div class="stat-num" style="color:var(--red)" id="statBuy">0</div><div class="stat-label">売買</div></div>
+  <div class="stat"><div class="stat-num" style="color:#e05c3a" id="statFavorite">0</div><div class="stat-label">お気に入り</div></div>
   <div class="stat-divider"></div>
-  <div class="stat"><div class="stat-num" style="color:#ee9b00">5</div><div class="stat-label">連携中</div></div>
+  <div class="stat"><div class="stat-num" style="color:#888" id="statSold">0</div><div class="stat-label">成約済み</div></div>
 </div>
+
+<div class="last-update" id="lastUpdate">読み込み中...</div>
 
 <div class="filter-section">
   <div class="filter-row">
-    <span class="filter-label">種別</span>
-    <button class="filter-btn active" data-type="all">すべて</button>
-    <button class="filter-btn" data-type="buy">売買</button>
-    <button class="filter-btn" data-type="invest">収益物件</button>
+    <span class="filter-label">状態</span>
+    <button class="filter-btn active" data-status="all">すべて</button>
+    <button class="filter-btn" data-status="販売中">販売中</button>
+    <button class="filter-btn" data-status="favorite">❤️ お気に入り</button>
+    <button class="filter-btn" data-status="成約済み">成約済み</button>
   </div>
   <div class="filter-row">
     <span class="filter-label">サイト</span>
     <button class="filter-btn active" data-site="all">すべて</button>
-    <button class="filter-btn src-suumo" data-site="suumo">SUUMO</button>
-    <button class="filter-btn src-homes" data-site="homes">HOME'S</button>
-    <button class="filter-btn src-goohome" data-site="goohome">グーホーム</button>
-    <button class="filter-btn src-uchina" data-site="uchina">うちなーらいふ</button>
-    <button class="filter-btn src-athome" data-site="athome">アットホーム</button>
-  </div>
-  <div class="filter-row">
-    <span class="filter-label">価格</span>
-    <select class="filter-select" id="priceFilter">
-      <option value="0">上限なし</option>
-      <option value="1000">〜1,000万</option>
-      <option value="3000">〜3,000万</option>
-      <option value="5000">〜5,000万</option>
-      <option value="10000">〜1億</option>
-    </select>
+    <button class="filter-btn" data-site="アットホーム">アットホーム</button>
+    <button class="filter-btn" data-site="HOME'S">HOME'S</button>
+    <button class="filter-btn" data-site="SUUMO">SUUMO</button>
+    <button class="filter-btn" data-site="健美家">健美家</button>
   </div>
 </div>
 
 <main>
-  <div class="section-title">新着物件一覧</div>
-  <div class="cards" id="cardGrid"></div>
+  <div class="section-title">物件一覧</div>
+  <div class="cards" id="cardGrid"><div class="loading">読み込み中...</div></div>
 </main>
 
-<footer>※ 各不動産サイトの公式通知・RSSを元に自動集計しています（デモ版）</footer>
+<footer>※ 各不動産サイトの公式通知メールを元に自動集計しています</footer>
 
 <script>
-const DATA = [
-  {type:'invest',site:'goohome',siteName:'グーホーム',name:'那覇市前島 一棟マンション',area:'那覇市前島',price:8500,label:'8,500万円',yield:'利回り 7.2%',rooms:'1K×12戸',age:'築8年',size:'延床452㎡',time:'1時間前',emoji:'🏢',isNew:true},
-  {type:'buy',site:'suumo',siteName:'SUUMO',name:'サンシャイン北谷 中古マンション',area:'北谷町美浜',price:2480,label:'2,480万円',yield:null,rooms:'3LDK',age:'築12年',size:'75.3㎡',time:'2時間前',emoji:'🌊',isNew:true},
-  {type:'invest',site:'homes',siteName:"HOME'S",name:'沖縄市一棟アパート',area:'沖縄市照屋',price:4200,label:'4,200万円',yield:'利回り 9.1%',rooms:'1K×8戸',age:'築15年',size:'延床280㎡',time:'3時間前',emoji:'🏘️',isNew:false},
-  {type:'buy',site:'uchina',siteName:'うちなーらいふ',name:'浦添市前田 新築一戸建て',area:'浦添市前田',price:3980,label:'3,980万円',yield:null,rooms:'4LDK',age:'新築',size:'105.2㎡',time:'4時間前',emoji:'🏡',isNew:true},
-  {type:'invest',site:'goohome',siteName:'グーホーム',name:'うるま市兼箇段 売アパート',area:'うるま市兼箇段',price:13800,label:'1億3,800万円',yield:'利回り 6.0%',rooms:'2LDK×8・他',age:'築21年',size:'延床856㎡',time:'5時間前',emoji:'🏢',isNew:false},
-  {type:'buy',site:'athome',siteName:'アットホーム',name:'宜野湾市大謝名 中古戸建',area:'宜野湾市大謝名',price:1980,label:'1,980万円',yield:null,rooms:'3LDK',age:'築22年',size:'88.6㎡',time:'6時間前',emoji:'🏠',isNew:true},
-  {type:'invest',site:'homes',siteName:"HOME'S",name:'恩納村 オーシャンビューコンドミニアム',area:'恩納村恩納',price:2980,label:'2,980万円',yield:'利回り 5.8%',rooms:'1LDK',age:'築6年',size:'52.1㎡',time:'7時間前',emoji:'🌺',isNew:false},
-  {type:'buy',site:'suumo',siteName:'SUUMO',name:'豊見城市豊崎 売地',area:'豊見城市豊崎',price:890,label:'890万円',yield:null,rooms:'土地',age:'─',size:'200.5㎡',time:'8時間前',emoji:'🌿',isNew:true},
-];
+let allData = [];
+let selStatus = 'all';
+let selSite = 'all';
 
-let selType='all', selSite='all';
+const siteEmoji = {
+  'アットホーム': '🏠',
+  "HOME'S": '🌊',
+  'SUUMO': '🏡',
+  '健美家': '📈',
+  'その他': '🏢'
+};
+
+async function loadProperties() {
+  try {
+    const res = await fetch('/api/properties');
+    allData = await res.json();
+    document.getElementById('lastUpdate').textContent =
+      '最終更新：' + new Date().toLocaleString('ja-JP');
+    render();
+  } catch (e) {
+    document.getElementById('cardGrid').innerHTML =
+      '<div class="empty">データの読み込みに失敗しました</div>';
+  }
+}
+
+async function markSold(id, e) {
+  e.stopPropagation();
+  await fetch(`/api/properties/${id}/sold`, { method: 'POST' });
+  await loadProperties();
+  selStatus = '成約済み';
+  document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-status="成約済み"]').classList.add('active');
+  render();
+}
+
+async function markUnsold(id, e) {
+  e.stopPropagation();
+  await fetch(`/api/properties/${id}/unsold`, { method: 'POST' });
+  await loadProperties();
+  selStatus = '販売中';
+  document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-status="販売中"]').classList.add('active');
+  render();
+}
+
+async function toggleFavorite(id, e) {
+  e.stopPropagation();
+  await fetch(`/api/properties/${id}/favorite`, { method: 'POST' });
+  await loadProperties();
+}
+
+async function fetchMails() {
+  const btn = document.getElementById('updateBtn');
+  btn.textContent = '⏳ 取得中...';
+  btn.disabled = true;
+  try {
+    await fetch('/api/fetch-mails', { method: 'POST' });
+    await loadProperties();
+  } catch (e) {
+    alert('取得に失敗しました');
+  }
+  btn.textContent = '🔄 新着取得';
+  btn.disabled = false;
+}
 
 function render() {
-  const maxPrice = parseInt(document.getElementById('priceFilter').value)||0;
-  const list = DATA.filter(p => {
-    if (selType!=='all' && p.type!==selType) return false;
-    if (selSite!=='all' && p.site!==selSite) return false;
-    if (maxPrice>0 && p.price>maxPrice) return false;
+  const list = allData.filter(p => {
+    if (selStatus === 'favorite') return p.favorite;
+    if (selStatus !== 'all' && p.status !== selStatus) return false;
+    if (selSite !== 'all' && p.site !== selSite) return false;
     return true;
   });
-  document.getElementById('statTotal').textContent = list.length;
-  document.getElementById('statInvest').textContent = list.filter(p=>p.type==='invest').length;
-  document.getElementById('statBuy').textContent = list.filter(p=>p.type==='buy').length;
+
+  document.getElementById('statTotal').textContent = allData.length;
+  document.getElementById('statSelling').textContent =
+    allData.filter(p => p.status === '販売中').length;
+  document.getElementById('statFavorite').textContent =
+    allData.filter(p => p.favorite).length;
+  document.getElementById('statSold').textContent =
+    allData.filter(p => p.status === '成約済み').length;
+
   const grid = document.getElementById('cardGrid');
-  if (!list.length) { grid.innerHTML='<p style="text-align:center;color:#6b7c93;padding:40px">条件に一致する物件がありません</p>'; return; }
-  grid.innerHTML = list.map(p=>`
-    <div class="card" onclick="window.open('${p.link||'#'}','_blank')">
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty">条件に一致する物件がありません</div>';
+    return;
+  }
+
+  grid.innerHTML = list.map(p => `
+   <div class="card ${p.status === '成約済み' ? 'sold' : ''}" onclick="${p.url ? `window.open('${p.url}','_blank')` : ''}">
       <div class="card-inner">
-        <div class="card-thumb bg-${p.site}">
-          <span>${p.emoji}</span>
+        <div class="card-thumb">
+          <span>${siteEmoji[p.site] || '🏢'}</span>
           <div class="card-badges">
-            ${p.isNew?'<span class="badge badge-new">NEW</span>':''}
-            <span class="badge ${p.type==='invest'?'badge-invest':'badge-buy'}">${p.type==='invest'?'収益':'売買'}</span>
-            <span class="badge badge-site">${p.siteName}</span>
+            <span class="badge ${p.status === '成約済み' ? 'badge-sold' : 'badge-selling'}">${p.status}</span>
+            <span class="badge badge-site">${p.site}</span>
           </div>
         </div>
         <div class="card-body">
-          <div class="card-price">${p.label}</div>
-          ${p.yield?`<div class="card-yield">📈 ${p.yield}</div>`:''}
-          <div class="card-name">${p.name}</div>
-          <div class="card-meta"><span>📍 ${p.area}</span><span>🏠 ${p.rooms}</span></div>
-          <div class="card-meta"><span>🗓 ${p.age}</span><span>📐 ${p.size}</span></div>
+          <div class="card-price">${p.price || '価格未定'}</div>
+          <div class="card-name">${p.title || '物件名なし'}</div>
+          ${p.address ? `<div class="card-meta">📍 ${p.address}</div>` : ''}
           <div class="card-footer">
-            <div class="card-time">🕐 ${p.time}</div>
-            <a class="card-link src-${p.site}" href="#" onclick="event.stopPropagation()">${p.siteName} →</a>
+            <div class="card-time">🕐 ${new Date(p.received_at).toLocaleDateString('ja-JP')}</div>
+            <div class="card-actions">
+              <button class="btn-heart" onclick="toggleFavorite('${p.id}', event)">${p.favorite ? '❤️' : '🤍'}</button>
+<a class="card-link" href="${p.url && !p.url.includes('click.ma') ? p.url : p.site === "HOME\'S" ? 'https://www.homes.co.jp/okinawa/' : '#'}" target="_blank" onclick="event.stopPropagation()">
+  <a class="card-link" href="${p.site === "HOME'S" ? 'https://www.homes.co.jp/kodate/okinawa/' : p.url || '#'}" target="_blank" onclick="event.stopPropagation()">詳細 →</a>
+              ${p.status === '販売中'
+                ? `<button class="btn-sold" onclick="markSold('${p.id}', event)">成約済み</button>`
+                : `<button class="btn-unsold" onclick="markUnsold('${p.id}', event)">解除</button>`
+              }
+            </div>
           </div>
         </div>
       </div>
@@ -177,20 +243,25 @@ function render() {
   `).join('');
 }
 
-document.querySelectorAll('[data-type]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('[data-type]').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active'); selType=btn.dataset.type; render();
+document.querySelectorAll('[data-status]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selStatus = btn.dataset.status;
+    render();
   });
 });
-document.querySelectorAll('[data-site]').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('[data-site]').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active'); selSite=btn.dataset.site; render();
+
+document.querySelectorAll('[data-site]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-site]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selSite = btn.dataset.site;
+    render();
   });
 });
-document.getElementById('priceFilter').addEventListener('change', render);
-render();
+
+loadProperties();
 </script>
 </body>
 </html>

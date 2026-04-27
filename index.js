@@ -1,39 +1,80 @@
 const express = require('express');
-const RSSParser = require('rss-parser');
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const app = express();
-const parser = new RSSParser();
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
+app.use(express.json());
 app.use(express.static('public'));
 
-const RSS_FEEDS = [
-  {
-    name: 'SUUMO',
-    url: 'https://suumo.jp/jj/bukken/rss/jj_bukken_rss.do?ra=64'
-  }
-];
-
+// 物件一覧取得
 app.get('/api/properties', async (req, res) => {
-  try {
-    const results = [];
-    for (const feed of RSS_FEEDS) {
-      const parsed = await parser.parseURL(feed.url);
-      parsed.items.forEach(item => {
-        results.push({
-          title: item.title,
-          link: item.link,
-          date: item.pubDate,
-          site: feed.name
-        });
-      });
-    }
-    res.json(results);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: '取得失敗' });
+  const { data, error } = await supabase
+    .from('properties')
+    .select('*')
+    .order('received_at', { ascending: false });
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
   }
+  res.json(data);
+});
+
+// 成約済みに変更
+app.post('/api/properties/:id/sold', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase
+    .from('properties')
+    .update({ status: '成約済み' })
+    .eq('id', id);
+
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+  res.json({ success: true });
+});
+
+// メール取得トリガー
+app.post('/api/fetch-mails', async (req, res) => {
+  const { execFile } = require('child_process');
+  execFile('node', ['mail.js'], (error, stdout, stderr) => {
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    res.json({ success: true, log: stdout });
+  });
 });
 
 app.listen(3000, () => {
   console.log('サーバー起動中: http://localhost:3000');
+});
+// 販売中に戻す
+app.post('/api/properties/:id/unsold', async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase
+    .from('properties')
+    .update({ status: '販売中' })
+    .eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
+// お気に入りトグル
+app.post('/api/properties/:id/favorite', async (req, res) => {
+  const { id } = req.params;
+  const { data } = await supabase
+    .from('properties')
+    .select('favorite')
+    .eq('id', id)
+    .single();
+  const { error } = await supabase
+    .from('properties')
+    .update({ favorite: !data.favorite })
+    .eq('id', id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
