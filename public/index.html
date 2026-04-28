@@ -195,7 +195,7 @@ function getDateRange(val) {
 
 async function loadProperties() {
   try {
-    const res = await fetch('/api/properties');
+const res = await fetch('https://okinawa-realestate-production.up.railway.app/api/properties');
     allData = await res.json();
     document.getElementById('lastUpdate').textContent = '最終更新：' + new Date().toLocaleString('ja-JP');
     render();
@@ -231,7 +231,7 @@ async function fetchMails() {
   btn.textContent = '⏳ 取得中...';
   btn.disabled = true;
   try {
-    await fetch('/api/fetch-mails', { method: 'POST' });
+    await fetch('https://okinawa-realestate-production.up.railway.app/api/fetch-mails', { method: 'POST' });
     await loadProperties();
   } catch (e) { alert('取得に失敗しました'); }
   btn.textContent = '🔄 新着取得';
