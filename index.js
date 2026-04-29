@@ -84,4 +84,19 @@ app.post('/api/properties/:id/favorite', async (req, res) => {
     .eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
+});// 1ヶ月以上古いデータを自動削除（毎日深夜1時に実行）
+cron.schedule('0 16 * * *', async () => {
+  const oneMonthAgo = new Date();
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+  const { error } = await supabase
+    .from('properties')
+    .delete()
+    .lt('received_at', oneMonthAgo.toISOString());
+
+  if (error) {
+    console.error('自動削除エラー:', error);
+  } else {
+    console.log('1ヶ月以上古いデータを削除しました');
+  }
 });
