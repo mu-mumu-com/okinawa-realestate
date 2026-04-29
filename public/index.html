@@ -52,12 +52,9 @@ header {
 .filter-btn[data-site="健美家"].active { background: #5a189a; }
 .date-filter { display: flex; gap: 6px; align-items: center; }
 .date-select { padding: 4px 10px; border-radius: 6px; border: 1.5px solid var(--border); font-size: 11px; font-family: inherit; color: var(--text); background: white; }
-
 main { padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
 .section-title { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-/* リスト形式 */
 .list { display: flex; flex-direction: column; gap: 8px; }
 .item {
   background: white; border-radius: 10px; border: 1px solid var(--border);
@@ -66,23 +63,17 @@ main { padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
 }
 .item:hover { box-shadow: 0 4px 16px rgba(0,95,115,0.1); }
 .item.sold { opacity: 0.5; }
-
 .item-badges { display: flex; flex-direction: column; gap: 3px; min-width: 70px; }
 .badge { padding: 2px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-align: center; white-space: nowrap; }
-
-/* サイト別バッジ色 */
 .badge-athome { background: #fde8e8; color: #c00000; }
 .badge-homes { background: #e8f0fd; color: #0066cc; }
 .badge-suumo { background: #e8f5ec; color: #00a040; }
 .badge-kenbiya { background: #f3e8fd; color: #5a189a; }
 .badge-other { background: #f0f0f0; color: #555; }
-
-/* 種別バッジ色 */
 .badge-sell { background: #e8f4fb; color: #005f73; }
 .badge-rent { background: #fff3e0; color: #e07b00; }
 .badge-invest { background: #f3e8fd; color: #5a189a; }
 .badge-sold { background: #f0f0f0; color: #888; }
-
 .item-info { flex: 1; min-width: 0; }
 .item-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .item-price { font-size: 15px; font-weight: 900; color: var(--ocean); }
@@ -94,9 +85,9 @@ main { padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
 .btn-sold { font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid #e05c3a; background: white; color: #e05c3a; cursor: pointer; font-family: inherit; font-weight: 600; white-space: nowrap; }
 .btn-sold:hover { background: #e05c3a; color: white; }
 .btn-unsold { font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid #888; background: white; color: #888; cursor: pointer; font-family: inherit; white-space: nowrap; }
-
 .empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
 .loading { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
+.external-sites { background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 16px; }
 footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 24px; }
 </style>
 </head>
@@ -157,22 +148,25 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
   </div>
 </div>
 
-<main>
-  <div class="section-title">物件一覧</div>
-  <div class="list" id="itemList"><div class="loading">読み込み中...</div></div>
-</main><div style="background:white; border-top:1px solid var(--border); padding:12px 16px; margin-top:8px;">
-  <div class="section-title" style="margin:0 0 10px 0;">外部不動産サイト</div>
-  <div style="display:flex; flex-direction:column; gap:8px;">
-    <a href="https://www.e-uchina.net/" target="_blank" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; border:1px solid var(--border); text-decoration:none; color:var(--text);">
+<!-- 外部サイトリンク（フィルターの下） -->
+<div class="external-sites">
+  <div class="section-title" style="margin-bottom:10px;">外部不動産サイト</div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+    <a href="https://www.e-uchina.net/" target="_blank" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; border:1px solid var(--border); text-decoration:none; color:var(--text); flex:1; min-width:140px;">
       <span style="font-size:13px; font-weight:700;">🏠 うちなーらいふ</span>
-      <span style="font-size:11px; color:var(--ocean2);">新着を見る →</span>
+      <span style="font-size:11px; color:var(--ocean2); margin-left:8px;">見る →</span>
     </a>
-    <a href="https://goohome.jp/" target="_blank" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; border:1px solid var(--border); text-decoration:none; color:var(--text);">
+    <a href="https://goohome.jp/" target="_blank" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; border:1px solid var(--border); text-decoration:none; color:var(--text); flex:1; min-width:140px;">
       <span style="font-size:13px; font-weight:700;">🏡 グーホーム</span>
-      <span style="font-size:11px; color:var(--ocean2);">新着を見る →</span>
+      <span style="font-size:11px; color:var(--ocean2); margin-left:8px;">見る →</span>
     </a>
   </div>
 </div>
+
+<main>
+  <div class="section-title">物件一覧</div>
+  <div class="list" id="itemList"><div class="loading">読み込み中...</div></div>
+</main>
 
 <footer>
   <div style="margin-bottom:10px;">※ 各不動産サイトの公式通知メールを元に自動集計しています</div>
@@ -184,6 +178,7 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
   </div>
   <div style="margin-top:10px;">© 2026 沖縄不動産 新着まとめ</div>
 </footer>
+
 <script>
 let allData = [];
 let selStatus = 'all';
@@ -215,7 +210,7 @@ function getDateRange(val) {
 
 async function loadProperties() {
   try {
-const res = await fetch('https://okinawa-realestate-production.up.railway.app/api/properties');
+    const res = await fetch('https://okinawa-realestate-production.up.railway.app/api/properties');
     allData = await res.json();
     document.getElementById('lastUpdate').textContent = '最終更新：' + new Date().toLocaleString('ja-JP');
     render();
@@ -226,7 +221,7 @@ const res = await fetch('https://okinawa-realestate-production.up.railway.app/ap
 
 async function markSold(id, e) {
   e.stopPropagation();
-  await fetch(`/api/properties/${id}/sold`, { method: 'POST' });
+  await fetch(`https://okinawa-realestate-production.up.railway.app/api/properties/${id}/sold`, { method: 'POST' });
   await loadProperties();
   selStatus = '成約済み';
   document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
@@ -236,13 +231,13 @@ async function markSold(id, e) {
 
 async function markUnsold(id, e) {
   e.stopPropagation();
-  await fetch(`/api/properties/${id}/unsold`, { method: 'POST' });
+  await fetch(`https://okinawa-realestate-production.up.railway.app/api/properties/${id}/unsold`, { method: 'POST' });
   await loadProperties();
 }
 
 async function toggleFavorite(id, e) {
   e.stopPropagation();
-  await fetch(`/api/properties/${id}/favorite`, { method: 'POST' });
+  await fetch(`https://okinawa-realestate-production.up.railway.app/api/properties/${id}/favorite`, { method: 'POST' });
   await loadProperties();
 }
 
@@ -303,10 +298,10 @@ function render() {
       <div class="item-actions">
         <button class="btn-heart" onclick="toggleFavorite('${p.id}', event)">${p.favorite ? '❤️' : '🤍'}</button>
         ${p.url ? `<a class="item-link" href="${p.url}" target="_blank" onclick="event.stopPropagation()">詳細→</a>` : ''}
-       ${p.status !== '成約済み'
-  ? `<button class="btn-sold" onclick="markSold('${p.id}', event)">成約</button>`
-  : `<button class="btn-unsold" onclick="markUnsold('${p.id}', event)">解除</button>`
-}
+        ${p.status !== '成約済み'
+          ? `<button class="btn-sold" onclick="markSold('${p.id}', event)">成約</button>`
+          : `<button class="btn-unsold" onclick="markUnsold('${p.id}', event)">解除</button>`
+        }
       </div>
     </div>`;
   }).join('');
