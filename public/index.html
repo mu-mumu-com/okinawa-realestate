@@ -87,7 +87,6 @@ main { padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
 .btn-unsold { font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid #888; background: white; color: #888; cursor: pointer; font-family: inherit; white-space: nowrap; }
 .empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
 .loading { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
-.external-sites { background: white; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 12px 16px; }
 footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 24px; }
 </style>
 </head>
@@ -134,6 +133,8 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
     <button class="filter-btn" data-site="HOME'S">HOME'S</button>
     <button class="filter-btn" data-site="SUUMO">SUUMO</button>
     <button class="filter-btn" data-site="健美家">健美家</button>
+    <a href="https://www.e-uchina.net/" target="_blank" style="padding:4px 10px; border-radius:16px; border:1.5px solid var(--border); background:white; font-size:11px; color:var(--text); text-decoration:none; font-weight:500;">🏠 うちなーらいふ</a>
+    <a href="https://goohome.jp/" target="_blank" style="padding:4px 10px; border-radius:16px; border:1.5px solid var(--border); background:white; font-size:11px; color:var(--text); text-decoration:none; font-weight:500;">🏡 グーホーム</a>
   </div>
   <div class="filter-row">
     <span class="filter-label">日付</span>
@@ -145,21 +146,6 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
         <option value="month">1ヶ月</option>
       </select>
     </div>
-  </div>
-</div>
-
-<!-- 外部サイトリンク（フィルターの下） -->
-<div class="external-sites">
-  <div class="section-title" style="margin-bottom:10px;">外部不動産サイト</div>
-  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-    <a href="https://www.e-uchina.net/" target="_blank" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; border:1px solid var(--border); text-decoration:none; color:var(--text); flex:1; min-width:140px;">
-      <span style="font-size:13px; font-weight:700;">🏠 うちなーらいふ</span>
-      <span style="font-size:11px; color:var(--ocean2); margin-left:8px;">見る →</span>
-    </a>
-    <a href="https://goohome.jp/" target="_blank" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; border:1px solid var(--border); text-decoration:none; color:var(--text); flex:1; min-width:140px;">
-      <span style="font-size:13px; font-weight:700;">🏡 グーホーム</span>
-      <span style="font-size:11px; color:var(--ocean2); margin-left:8px;">見る →</span>
-    </a>
   </div>
 </div>
 
