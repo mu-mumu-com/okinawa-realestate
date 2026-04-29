@@ -19,6 +19,7 @@ app.use(express.static('public'));
 
 // 物件一覧取得
 app.get('/api/properties', async (req, res) => {
+  res.set('Cache-Control', 'no-store'); //
   const { data, error } = await supabase
     .from('properties')
     .select('*')
