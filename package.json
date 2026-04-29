@@ -17,6 +17,7 @@
     "express": "^5.2.1",
     "imap": "^0.8.19",
     "mailparser": "^3.9.8",
+    "node-cron": "^4.2.1",
     "rss-parser": "^3.13.0"
   }
 }

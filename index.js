@@ -1,7 +1,7 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
-
+const cron = require('node-cron');
 const app = express();
 const supabase = createClient(
   process.env.SUPABASE_URL,
