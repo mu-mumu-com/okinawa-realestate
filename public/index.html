@@ -160,8 +160,7 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
 <main>
   <div class="section-title">物件一覧</div>
   <div class="list" id="itemList"><div class="loading">読み込み中...</div></div>
-</main>
-<div style="background:white; border-top:1px solid var(--border); padding:12px 16px; margin-top:8px;">
+</main><div style="background:white; border-top:1px solid var(--border); padding:12px 16px; margin-top:8px;">
   <div class="section-title" style="margin:0 0 10px 0;">外部不動産サイト</div>
   <div style="display:flex; flex-direction:column; gap:8px;">
     <a href="https://www.e-uchina.net/" target="_blank" style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--bg); border-radius:8px; border:1px solid var(--border); text-decoration:none; color:var(--text);">
@@ -174,8 +173,17 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
     </a>
   </div>
 </div>
-<footer>※ 各不動産サイトの公式通知メールを元に自動集計しています</footer>
 
+<footer>
+  <div style="margin-bottom:10px;">※ 各不動産サイトの公式通知メールを元に自動集計しています</div>
+  <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap;">
+    <a href="#" style="color:var(--muted); text-decoration:none; font-size:11px;">利用規約</a>
+    <a href="#" style="color:var(--muted); text-decoration:none; font-size:11px;">プライバシーポリシー</a>
+    <a href="#" style="color:var(--muted); text-decoration:none; font-size:11px;">お問い合わせ</a>
+    <a href="#" style="color:var(--muted); text-decoration:none; font-size:11px;">運営会社</a>
+  </div>
+  <div style="margin-top:10px;">© 2026 沖縄不動産 新着まとめ</div>
+</footer>
 <script>
 let allData = [];
 let selStatus = 'all';
