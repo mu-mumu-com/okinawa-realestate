@@ -1,0 +1,40 @@
+require('dotenv').config();
+const Imap = require('imap');
+const { simpleParser } = require('mailparser');
+
+console.log('開始');
+console.log('GMAIL_USER:', process.env.GMAIL_USER);
+
+const imap = new Imap({
+  user: process.env.GMAIL_USER,
+  password: process.env.GMAIL_PASS,
+  host: 'imap.gmail.com',
+  port: 993,
+  tls: true,
+  tlsOptions: { rejectUnauthorized: false }
+});
+
+imap.once('ready', () => {
+  console.log('接続成功');
+  imap.openBox('INBOX', false, (err, box) => {
+    console.log('総メール数:', box.messages.total);
+    const total = box.messages.total;
+    const start = Math.max(1, total - 49);
+    const fetch = imap.fetch(start + ':' + total, { bodies: '' });
+    fetch.on('message', msg => {
+      msg.on('body', stream => {
+        simpleParser(stream, (err, parsed) => {
+          const from = parsed.from ? parsed.from.text : '';
+          console.log('FROM:', from);
+          if (from.includes('homes') || from.includes('lifull')) {
+            console.log('HOMES発見:', parsed.subject);
+          }
+        });
+      });
+    });
+    fetch.once('end', () => setTimeout(() => imap.end(), 3000));
+  });
+});
+
+imap.once('error', e => console.log('エラー:', e));
+imap.connect();

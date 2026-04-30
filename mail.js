@@ -55,13 +55,12 @@ type: '売買',
     }
   }
 
-  // HOME'Sのメール解析
+ // HOME'Sのメール解析
   if (site === "HOME'S") {
-    // 不要メールを除外
-  if (subject.includes('閲覧') || subject.includes('おすすめ')) {
+    if (subject.includes('閲覧') || subject.includes('おすすめ')) {
       return properties;
     }
-    const priceMatch = subject.match(/(\d[\d,]+万円)/);
+    const priceMatch = subject.match(/(\d[\d,.]+万円)/);
     if (!priceMatch) return properties;
 
     const htmlBody = parsed && parsed.html ? parsed.html : '';
@@ -76,24 +75,26 @@ type: '売買',
       !u.includes('.gif') &&
       !u.includes('img') &&
       !u.includes('assets') &&
-      
       !u.includes('click.ma')
     );
 
-   const cleanTitle = subject
-      .replace(/🌄朝の新着\d+件🔔/u, '')
+    const cleanTitle = subject
+      .replace(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\S*新着\d+件[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/gu, '')
       .replace(/｜LIFULL HOME'S新着お知らせメール/u, '')
       .replace(/\|LIFULL HOME'S新着お知らせメール/u, '')
+      .replace(/\/ほか$/, '')
       .trim();
 
+    const price = priceMatch[1];
+const isRental = parseFloat(price.replace(/,/g, '')) < 1000;
     properties.push({
       title: cleanTitle,
-      price: priceMatch[1],
+      price: price,
       address: '',
       url: urlMatch || 'https://www.homes.co.jp/kodate/okinawa/',
       site,
       status: '販売中',
-      type: '売買',
+      type: isRental ? '賃貸' : '売買',
       received_at: new Date().toISOString()
     });
   }

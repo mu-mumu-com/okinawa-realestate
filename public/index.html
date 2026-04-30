@@ -186,9 +186,10 @@ const typeBadgeClass = {
 
 function getDateRange(val) {
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+today.setHours(-9, 0, 0, 0);
   if (val === 'today') return today;
-  if (val === 'yesterday') { const d = new Date(today); d.setDate(d.getDate() - 1); return d; }
+if (val === 'yesterday') { const d = new Date(today); d.setDate(d.getDate() - 1); return d; }
   if (val === 'week') { const d = new Date(today); d.setDate(d.getDate() - 7); return d; }
   if (val === 'month') { const d = new Date(today); d.setMonth(d.getMonth() - 1); return d; }
   return today;
