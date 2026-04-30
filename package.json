@@ -13,7 +13,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.104.1",
     "axios": "^1.15.2",
-    "dotenv": "^17.4.2",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "imap": "^0.8.19",
     "mailparser": "^3.9.8",
