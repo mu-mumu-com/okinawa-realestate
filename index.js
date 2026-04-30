@@ -57,7 +57,9 @@ app.post('/api/fetch-mails', async (req, res) => {
 });
 
 app.listen(3000, () => {
-  console.log('サーバー起動中: http://localhost:3000');
+  const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`サーバー起動中: port ${PORT}`);
 });
 // 販売中に戻す
 app.post('/api/properties/:id/unsold', async (req, res) => {
