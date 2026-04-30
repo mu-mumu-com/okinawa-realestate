@@ -17,51 +17,34 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static('public'));
 
-// 物件一覧取得
 app.get('/api/properties', async (req, res) => {
-  res.set('Cache-Control', 'no-store'); //
+  res.set('Cache-Control', 'no-store');
   const { data, error } = await supabase
     .from('properties')
     .select('*')
     .order('received_at', { ascending: false });
-
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
+  if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
 
-// 成約済みに変更
 app.post('/api/properties/:id/sold', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase
     .from('properties')
     .update({ status: '成約済み' })
     .eq('id', id);
-
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
+  if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });
 
-// メール取得トリガー
 app.post('/api/fetch-mails', async (req, res) => {
   const { execFile } = require('child_process');
   execFile('node', ['mail.js'], (error, stdout, stderr) => {
-    if (error) {
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(500).json({ error: error.message });
     res.json({ success: true, log: stdout });
   });
 });
 
-app.listen(3000, () => {
-  const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`サーバー起動中: port ${PORT}`);
-});
-// 販売中に戻す
 app.post('/api/properties/:id/unsold', async (req, res) => {
   const { id } = req.params;
   const { error } = await supabase
@@ -72,7 +55,6 @@ app.post('/api/properties/:id/unsold', async (req, res) => {
   res.json({ success: true });
 });
 
-// お気に入りトグル
 app.post('/api/properties/:id/favorite', async (req, res) => {
   const { id } = req.params;
   const { data } = await supabase
@@ -86,19 +68,23 @@ app.post('/api/properties/:id/favorite', async (req, res) => {
     .eq('id', id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
-});// 1ヶ月以上古いデータを自動削除（毎日深夜1時に実行）
+});
+
 cron.schedule('0 16 * * *', async () => {
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
   const { error } = await supabase
     .from('properties')
     .delete()
     .lt('received_at', oneMonthAgo.toISOString());
-
   if (error) {
     console.error('自動削除エラー:', error);
   } else {
     console.log('1ヶ月以上古いデータを削除しました');
   }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`サーバー起動中: port ${PORT}`);
 });
