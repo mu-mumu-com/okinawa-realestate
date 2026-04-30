@@ -76,7 +76,7 @@ type: '売買',
       !u.includes('.gif') &&
       !u.includes('img') &&
       !u.includes('assets') &&
-      !u.includes('mail') &&
+      
       !u.includes('click.ma')
     );
 
@@ -94,7 +94,6 @@ type: '売買',
       site,
       status: '販売中',
       type: '売買',
-          status: '販売中',
       received_at: new Date().toISOString()
     });
   }
@@ -111,7 +110,6 @@ type: '売買',
       site,
       status: '販売中',
       type: '収益',
-          status: '販売中',
       received_at: new Date().toISOString()
     });
   }
@@ -156,7 +154,7 @@ const links = [...linkMatches].filter(m =>
         url: 'https://suumo.jp/okinawa/',
         site,
 type: title.match(/^\d+(\.\d+)?万円/) ? '賃貸' : '売買',
-          status: '販売中',        received_at: new Date().toISOString()
+              received_at: new Date().toISOString()
       });
     }
   }
