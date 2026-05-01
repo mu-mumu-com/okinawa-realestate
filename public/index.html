@@ -246,7 +246,12 @@ function render() {
 
   const list = allData.filter(p => {
     const pDate = new Date(p.received_at);
-    if (pDate < fromDate) return false;
+if (pDate < fromDate) return false;
+if (dateVal === 'yesterday') {
+  const tomorrow = new Date(fromDate);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (pDate >= tomorrow) return false;
+}
     if (selStatus === 'favorite') return p.favorite;
     if (selStatus === '販売中') return p.type === '売買' && p.status === '販売中';
     if (selStatus === '賃貸') return p.type === '賃貸';
