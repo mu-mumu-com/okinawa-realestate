@@ -392,9 +392,16 @@ const typeBadgeClass = {
 
 // 認証チェック
 async function initAuth() {
-  // OAuthエラーをURLから検出して表示
   const hash = new URLSearchParams(window.location.hash.replace('#', ''));
   const query = new URLSearchParams(window.location.search);
+
+  // パスワードリセットリンクからの場合はPASSWORD_RECOVERYイベントに任せる
+  if (hash.get('type') === 'recovery') {
+    isRecoveryMode = true;
+    return;
+  }
+
+  // OAuthエラーをURLから検出して表示
   const error = hash.get('error') || query.get('error');
   const errorDesc = hash.get('error_description') || query.get('error_description');
   if (error) {
