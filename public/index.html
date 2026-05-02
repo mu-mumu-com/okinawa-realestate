@@ -186,13 +186,16 @@ const typeBadgeClass = {
 
 function getDateRange(val) {
   const now = new Date();
-const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-today.setHours(-9, 0, 0, 0);
-  if (val === 'today') return today;
-if (val === 'yesterday') { const d = new Date(today); d.setDate(d.getDate() - 1); return d; }
-  if (val === 'week') { const d = new Date(today); d.setDate(d.getDate() - 7); return d; }
-  if (val === 'month') { const d = new Date(today); d.setMonth(d.getMonth() - 1); return d; }
-  return today;
+  const jstOffset = 9 * 60 * 60 * 1000;
+  const todayJST = new Date(Math.floor((now.getTime() + jstOffset) / 86400000) * 86400000 - jstOffset);
+  if (val === 'today') return { from: todayJST, to: null };
+  if (val === 'yesterday') {
+    const from = new Date(todayJST); from.setDate(from.getDate() - 1);
+    return { from, to: todayJST };
+  }
+  if (val === 'week') { const from = new Date(todayJST); from.setDate(from.getDate() - 7); return { from, to: null }; }
+  if (val === 'month') { const from = new Date(todayJST); from.setMonth(from.getMonth() - 1); return { from, to: null }; }
+  return { from: todayJST, to: null };
 }
 
 async function loadProperties() {
@@ -245,8 +248,10 @@ function render() {
   const fromDate = getDateRange(dateVal);
 
   const list = allData.filter(p => {
-    const pDate = new Date(p.received_at);
-if (pDate < fromDate) return false;
+   const { from, to } = getDateRange(dateVal);
+const pDate = new Date(p.received_at);
+if (pDate < from) return false;
+if (to && pDate >= to) return false; 
 if (dateVal === 'yesterday') {
   const tomorrow = new Date(fromDate);
   tomorrow.setDate(tomorrow.getDate() + 1);
