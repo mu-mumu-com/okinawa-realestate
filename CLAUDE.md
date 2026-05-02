@@ -17,20 +17,21 @@
 ## ファイル構成
 
 ```
-index.js     - Expressサーバー（APIエンドポイント・古いデータ自動削除cron）
-mail.js      - Gmail IMAPでメール取得→Supabaseに保存（単体実行スクリプト）
-check.js     - デバッグ用スクリプト
+index.js          - Expressサーバー（APIエンドポイント・認証・古いデータ自動削除cron）
+mail.js           - Gmail IMAPでメール取得→Supabaseに保存（単体実行スクリプト）
+crypto-utils.js   - AES-256-GCM暗号化ユーティリティ（Gmailパスワード暗号化用）
+check.js          - デバッグ用スクリプト
 public/
-  index.html - フロントエンド（フィルター・物件一覧・お気に入り・成約管理）
+  index.html      - フロントエンド（ログイン・フィルター・物件一覧・お気に入り・成約管理）
 ```
 
 ## 環境変数
 
 ```
-SUPABASE_URL   - SupabaseプロジェクトのURL
-SUPABASE_KEY   - Supabaseのanonキー
-GMAIL_USER     - GmailのアドレS
-GMAIL_PASS     - Gmailのアプリパスワード
+SUPABASE_URL        - SupabaseプロジェクトのURL
+SUPABASE_KEY        - Supabaseのanonキー
+SUPABASE_SERVICE_KEY - SupabaseのServiceキー（RLSバイパス用）
+ENCRYPTION_KEY      - Gmailパスワード暗号化キー（64文字hex）※RailwayのExpressとCron両方に設定必須
 ```
 
 ## 完成している機能
@@ -39,9 +40,15 @@ GMAIL_PASS     - Gmailのアプリパスワード
 - フィルター（状態・サイト・日付）
 - お気に入り登録
 - 成約済みマーク・解除
-- 新着取得ボタン（手動でmail.jsを実行）
+- 新着取得ボタン（手動でmail.jsを実行、5分レート制限あり）
 - 古いデータ自動削除（1ヶ月以上経過したものを毎日JST 01:00に削除）
 - Railway Cronジョブ（毎朝JST 08:00にmail.jsを自動実行）
+- Supabase Auth（メール/パスワード・Googleログイン・パスワードリセット）
+- マルチテナント（ユーザーごとにGmail設定・物件データを分離、RLS）
+- Gmailアプリパスワードの暗号化保存（AES-256-GCM）
+- セキュリティ対策（XSS対策・CORS制限・TLS有効・入力バリデーション）
+- モバイルレスポンシブ対応
+- カスタムSMTP（Resend経由でパスワードリセットメール送信）
 
 ## 対応サイト（mail.js）
 
@@ -62,7 +69,10 @@ GMAIL_PASS     - Gmailのアプリパスワード
 | 状態 | タスク |
 |------|--------|
 | ✅ 完了 | Railway Cronジョブで毎朝mail.jsを自動実行 |
-| 🔄 作業中 | ログイン機能（Supabase Auth） |
+| ✅ 完了 | ログイン機能（Supabase Auth・Google OAuth・パスワードリセット） |
+| ✅ 完了 | マルチテナント対応（ユーザーごとのGmail設定・RLS） |
+| ✅ 完了 | セキュリティ強化（XSS・CORS・TLS・暗号化・レート制限） |
+| ✅ 完了 | モバイルレスポンシブ対応 |
 | ⬜ 未着手 | Stripe決済 |
 | ⬜ 未着手 | グーホーム・うちなーらいふ対応 |
 
@@ -72,4 +82,8 @@ GMAIL_PASS     - Gmailのアプリパスワード
 - `index.js`のcron（UTC 16:00）はSupabaseから直接削除するため、Railway環境変数が必須。
 - フロントエンドのAPIのURLはハードコードされている（`okinawa-realestate-production.up.railway.app`）。
 - RailwayのタイムゾーンはUTCのため、JST 08:00 = UTC 23:00（`0 23 * * *`）。
-- Supabase Authを導入する際は、現在のAPIエンドポイントに認証ミドルウェアを追加する必要がある。
+- `ENCRYPTION_KEY`はRailwayのExpressサービスとCronサービス両方に設定が必要。
+- GmailパスワードはAES-256-GCMで暗号化して保存。移行期は平文フォールバックあり（再保存で暗号化）。
+- Google OAuth同意画面は「外部」・テスト中のため、テストユーザーの追加が必要な場合あり。
+- カスタムSMTPはGmail（smtp.gmail.com:587）を使用。Resendは無料プランで送信制限あり。
+- パスワードリセットリンクのURLハッシュに`type=recovery`が含まれる場合、自動ログインをスキップしてパスワード設定画面を表示する。
