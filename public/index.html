@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>沖縄不動産 新着まとめ</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -14,6 +15,62 @@
   --card: #ffffff; --border: #ddeaf0;
 }
 body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); }
+
+/* ログイン画面 */
+#loginOverlay {
+  position: fixed; inset: 0; background: linear-gradient(135deg, var(--dark), var(--ocean));
+  display: flex; align-items: center; justify-content: center; z-index: 1000;
+}
+.login-box {
+  background: white; border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.login-logo { text-align: center; margin-bottom: 28px; }
+.login-logo-icon { width: 56px; height: 56px; background: var(--ocean2); border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; }
+.login-title { font-size: 18px; font-weight: 900; color: var(--dark); }
+.login-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.login-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+.login-tab { flex: 1; text-align: center; padding: 10px; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+.login-tab.active { color: var(--ocean); border-bottom-color: var(--ocean); }
+.form-group { margin-bottom: 16px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 6px; }
+.form-input {
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-family: inherit; color: var(--text); outline: none;
+}
+.form-input:focus { border-color: var(--ocean2); }
+.btn-primary {
+  width: 100%; padding: 12px; background: var(--ocean); color: white; border: none;
+  border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+  margin-top: 8px;
+}
+.btn-primary:hover { background: var(--ocean2); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.login-error { color: #e05c3a; font-size: 12px; text-align: center; margin-top: 12px; min-height: 18px; }
+
+/* 設定モーダル */
+#settingsModal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center; z-index: 500;
+}
+#settingsModal.open { display: flex; }
+.modal-box {
+  background: white; border-radius: 16px; padding: 32px; width: 100%; max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.modal-title { font-size: 16px; font-weight: 900; margin-bottom: 8px; color: var(--dark); }
+.modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+.btn-secondary {
+  flex: 1; padding: 10px; background: white; color: var(--muted);
+  border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px;
+  font-weight: 600; cursor: pointer; font-family: inherit;
+}
+.btn-save {
+  flex: 2; padding: 10px; background: var(--ocean); color: white; border: none;
+  border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+}
+
 header {
   background: linear-gradient(135deg, var(--dark), var(--ocean));
   padding: 0 16px; height: 60px;
@@ -25,8 +82,11 @@ header {
 .logo-icon { width: 34px; height: 34px; background: var(--ocean2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .logo-text { color: white; font-size: 15px; font-weight: 700; }
 .logo-sub { color: var(--sky); font-size: 10px; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
 .btn-update { background: var(--ocean2); color: white; border: none; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; }
 .btn-update:disabled { opacity: 0.6; }
+.btn-settings { background: transparent; color: var(--sky); border: 1px solid var(--sky); padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
+.btn-logout { background: transparent; color: var(--sky); border: none; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: inherit; }
 .stats-bar { background: white; border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; }
 .stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
 .stat-num { font-size: 20px; font-weight: 900; color: var(--ocean); }
@@ -91,6 +151,52 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
 </style>
 </head>
 <body>
+
+<!-- ログイン画面 -->
+<div id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">🏠</div>
+      <div class="login-title">沖縄不動産 新着まとめ</div>
+      <div class="login-sub">OKINAWA REAL ESTATE DASHBOARD</div>
+    </div>
+    <div class="login-tabs">
+      <div class="login-tab active" onclick="switchTab('signin')">ログイン</div>
+      <div class="login-tab" onclick="switchTab('signup')">新規登録</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">メールアドレス</label>
+      <input class="form-input" type="email" id="loginEmail" placeholder="example@gmail.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">パスワード</label>
+      <input class="form-input" type="password" id="loginPassword" placeholder="パスワードを入力">
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="handleAuth()">ログイン</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- 設定モーダル -->
+<div id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-title">Gmail 接続設定</div>
+    <div class="modal-sub">不動産通知メールを受信するGmailアドレスとアプリパスワードを入力してください。</div>
+    <div class="form-group">
+      <label class="form-label">Gmailアドレス</label>
+      <input class="form-input" type="email" id="settingsGmailUser" placeholder="example@gmail.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">アプリパスワード（16桁）</label>
+      <input class="form-input" type="password" id="settingsGmailPass" placeholder="xxxx xxxx xxxx xxxx">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeSettings()">キャンセル</button>
+      <button class="btn-save" onclick="saveSettings()">保存する</button>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="logo">
     <div class="logo-icon">🏠</div>
@@ -99,7 +205,11 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
       <div class="logo-sub">OKINAWA REAL ESTATE DASHBOARD</div>
     </div>
   </div>
-  <button class="btn-update" id="updateBtn" onclick="fetchMails()">🔄 新着取得</button>
+  <div class="header-actions">
+    <button class="btn-settings" onclick="openSettings()">⚙ 設定</button>
+    <button class="btn-update" id="updateBtn" onclick="fetchMails()">🔄 新着取得</button>
+    <button class="btn-logout" onclick="logout()">ログアウト</button>
+  </div>
 </header>
 
 <div class="stats-bar">
@@ -166,9 +276,18 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
 </footer>
 
 <script>
+const SUPABASE_URL = 'https://eablbbfdylgxnhacqgkt.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhYmxiYmZkeWxneG5oYWNxZ2t0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTYyNzcsImV4cCI6MjA5MjczMjI3N30.hkBZnPgUsyUAalaWur_0lFQMoMPJsFM78qKdU66ONKs';
+const API = 'https://okinawa-realestate-production.up.railway.app';
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 let allData = [];
 let selStatus = 'all';
 let selSite = 'all';
+let currentToken = null;
+let currentTab = 'signin';
 
 const siteBadgeClass = {
   'アットホーム': 'badge-athome',
@@ -183,6 +302,103 @@ const typeBadgeClass = {
   '収益': 'badge-invest',
   '成約済み': 'badge-sold'
 };
+
+// 認証チェック
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    currentToken = session.access_token;
+    showApp();
+    loadProperties();
+  }
+}
+
+function showApp() {
+  document.getElementById('loginOverlay').style.display = 'none';
+}
+
+function showLogin() {
+  document.getElementById('loginOverlay').style.display = 'flex';
+  currentToken = null;
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.login-tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0 && tab === 'signin') || (i === 1 && tab === 'signup'));
+  });
+  document.getElementById('loginBtn').textContent = tab === 'signin' ? 'ログイン' : '新規登録';
+  document.getElementById('loginError').textContent = '';
+}
+
+async function handleAuth() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn = document.getElementById('loginBtn');
+  const errEl = document.getElementById('loginError');
+
+  if (!email || !password) { errEl.textContent = 'メールとパスワードを入力してください'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '処理中...';
+  errEl.textContent = '';
+
+  let result;
+  if (currentTab === 'signin') {
+    result = await sb.auth.signInWithPassword({ email, password });
+  } else {
+    result = await sb.auth.signUp({ email, password });
+  }
+
+  if (result.error) {
+    errEl.textContent = result.error.message;
+    btn.disabled = false;
+    btn.textContent = currentTab === 'signin' ? 'ログイン' : '新規登録';
+    return;
+  }
+
+  currentToken = result.data.session?.access_token;
+  if (currentTab === 'signup' && !currentToken) {
+    errEl.textContent = '確認メールを送信しました。メールを確認してからログインしてください。';
+    btn.disabled = false;
+    btn.textContent = '新規登録';
+    return;
+  }
+
+  showApp();
+  loadProperties();
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  showLogin();
+}
+
+// 設定モーダル
+async function openSettings() {
+  const res = await fetch(`${API}/api/settings`, { headers: { Authorization: `Bearer ${currentToken}` } });
+  const data = await res.json();
+  if (data.gmail_user) document.getElementById('settingsGmailUser').value = data.gmail_user;
+  document.getElementById('settingsModal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settingsModal').classList.remove('open');
+}
+
+async function saveSettings() {
+  const gmail_user = document.getElementById('settingsGmailUser').value.trim();
+  const gmail_pass = document.getElementById('settingsGmailPass').value.trim();
+  if (!gmail_user || !gmail_pass) { alert('GmailアドレスとアプリパスワードをS入力してください'); return; }
+
+  await fetch(`${API}/api/settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${currentToken}` },
+    body: JSON.stringify({ gmail_user, gmail_pass })
+  });
+  closeSettings();
+  alert('保存しました');
+}
 
 function getDateRange(val) {
   const now = new Date();
@@ -200,7 +416,10 @@ function getDateRange(val) {
 
 async function loadProperties() {
   try {
-    const res = await fetch('https://okinawa-realestate-production.up.railway.app/api/properties');
+    const res = await fetch(`${API}/api/properties`, {
+      headers: { Authorization: `Bearer ${currentToken}` }
+    });
+    if (res.status === 401) { showLogin(); return; }
     allData = await res.json();
     document.getElementById('lastUpdate').textContent = '最終更新：' + new Date().toLocaleString('ja-JP');
     render();
@@ -211,7 +430,9 @@ async function loadProperties() {
 
 async function markSold(id, e) {
   e.stopPropagation();
-  await fetch(`https://okinawa-realestate-production.up.railway.app/api/properties/${id}/sold`, { method: 'POST' });
+  await fetch(`${API}/api/properties/${id}/sold`, {
+    method: 'POST', headers: { Authorization: `Bearer ${currentToken}` }
+  });
   await loadProperties();
   selStatus = '成約済み';
   document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
@@ -221,13 +442,17 @@ async function markSold(id, e) {
 
 async function markUnsold(id, e) {
   e.stopPropagation();
-  await fetch(`https://okinawa-realestate-production.up.railway.app/api/properties/${id}/unsold`, { method: 'POST' });
+  await fetch(`${API}/api/properties/${id}/unsold`, {
+    method: 'POST', headers: { Authorization: `Bearer ${currentToken}` }
+  });
   await loadProperties();
 }
 
 async function toggleFavorite(id, e) {
   e.stopPropagation();
-  await fetch(`https://okinawa-realestate-production.up.railway.app/api/properties/${id}/favorite`, { method: 'POST' });
+  await fetch(`${API}/api/properties/${id}/favorite`, {
+    method: 'POST', headers: { Authorization: `Bearer ${currentToken}` }
+  });
   await loadProperties();
 }
 
@@ -236,8 +461,12 @@ async function fetchMails() {
   btn.textContent = '⏳ 取得中...';
   btn.disabled = true;
   try {
-    await fetch('https://okinawa-realestate-production.up.railway.app/api/fetch-mails', { method: 'POST' });
-    await loadProperties();
+    const res = await fetch(`${API}/api/fetch-mails`, {
+      method: 'POST', headers: { Authorization: `Bearer ${currentToken}` }
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || '取得に失敗しました'); }
+    else { await loadProperties(); }
   } catch (e) { alert('取得に失敗しました'); }
   btn.textContent = '🔄 新着取得';
   btn.disabled = false;
@@ -245,18 +474,12 @@ async function fetchMails() {
 
 function render() {
   const dateVal = document.getElementById('dateFilter').value;
-  const fromDate = getDateRange(dateVal);
 
   const list = allData.filter(p => {
-   const { from, to } = getDateRange(dateVal);
-const pDate = new Date(p.received_at);
-if (pDate < from) return false;
-if (to && pDate >= to) return false; 
-if (dateVal === 'yesterday') {
-  const tomorrow = new Date(fromDate);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (pDate >= tomorrow) return false;
-}
+    const { from, to } = getDateRange(dateVal);
+    const pDate = new Date(p.received_at);
+    if (pDate < from) return false;
+    if (to && pDate >= to) return false;
     if (selStatus === 'favorite') return p.favorite;
     if (selStatus === '販売中') return p.type === '売買' && p.status === '販売中';
     if (selStatus === '賃貸') return p.type === '賃貸';
@@ -321,7 +544,7 @@ document.querySelectorAll('[data-site]').forEach(btn => {
   });
 });
 
-loadProperties();
+initAuth();
 </script>
 </body>
 </html>

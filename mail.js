@@ -5,33 +5,18 @@ require('dotenv').config();
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_KEY
 );
-
-const imap = new Imap({
-  user: process.env.GMAIL_USER,
-  password: process.env.GMAIL_PASS,
-  host: 'imap.gmail.com',
-  port: 993,
-  tls: true,
-  tlsOptions: { rejectUnauthorized: false }
-});
-
-function openInbox(cb) {
-  imap.openBox('INBOX', false, cb);
-}
 
 function parseProperty(subject, body, from, parsed) {
   const properties = [];
 
   let site = 'その他';
-  let type = '売買';
   if (from.includes('athome')) site = 'アットホーム';
   else if (from.includes('homes') || from.includes('lifull')) site = "HOME'S";
   else if (from.includes('suumo') || from.includes('recruit')) site = 'SUUMO';
   else if (from.includes('kenbiya')) site = '健美家';
 
-  // アットホームのメール解析
   if (site === 'アットホーム') {
     const blocks = body.split('================================');
     for (let i = 1; i < blocks.length; i += 2) {
@@ -47,7 +32,7 @@ function parseProperty(subject, body, from, parsed) {
           address: addressMatch ? addressMatch[1].trim() : '',
           url: urlMatch ? urlMatch[0] : '',
           site,
-type: '売買',
+          type: '売買',
           status: '販売中',
           received_at: new Date().toISOString()
         });
@@ -55,11 +40,8 @@ type: '売買',
     }
   }
 
- // HOME'Sのメール解析
   if (site === "HOME'S") {
-    if (subject.includes('閲覧') || subject.includes('おすすめ')) {
-      return properties;
-    }
+    if (subject.includes('閲覧') || subject.includes('おすすめ')) return properties;
     const priceMatch = subject.match(/(\d[\d,.]+万円)/);
     if (!priceMatch) return properties;
 
@@ -70,26 +52,22 @@ type: '売買',
     ];
     const urlMatch = allUrls.find(u =>
       (u.includes('homes.co.jp') || u.includes('lifull.com')) &&
-      !u.includes('.png') &&
-      !u.includes('.jpg') &&
-      !u.includes('.gif') &&
-      !u.includes('img') &&
-      !u.includes('assets') &&
-      !u.includes('click.ma')
+      !u.includes('.png') && !u.includes('.jpg') && !u.includes('.gif') &&
+      !u.includes('img') && !u.includes('assets') && !u.includes('click.ma')
     );
 
     const cleanTitle = subject
-      .replace(/[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\S*新着\d+件[\u2600-\u27BF\uD83C-\uDBFF\uDC00-\uDFFF]+\s*/gu, '')
+      .replace(/[☀-➿\uD83C-􏰀-\uDFFF]+\S*新着\d+件[☀-➿\uD83C-􏰀-\uDFFF]+\s*/gu, '')
       .replace(/｜LIFULL HOME'S新着お知らせメール/u, '')
       .replace(/\|LIFULL HOME'S新着お知らせメール/u, '')
       .replace(/\/ほか$/, '')
       .trim();
 
     const price = priceMatch[1];
-const isRental = parseFloat(price.replace(/,/g, '')) < 1000;
+    const isRental = parseFloat(price.replace(/,/g, '')) < 1000;
     properties.push({
       title: cleanTitle,
-      price: price,
+      price,
       address: '',
       url: urlMatch || 'https://www.homes.co.jp/kodate/okinawa/',
       site,
@@ -99,7 +77,6 @@ const isRental = parseFloat(price.replace(/,/g, '')) < 1000;
     });
   }
 
-  // 健美家のメール解析
   if (site === '健美家' && subject.includes('新着物件')) {
     const priceMatch = subject.match(/(\d[\d,]+万円)/);
     const urlMatch = body.match(/https?:\/\/www\.kenbiya\.com\/[^\s\n]+/);
@@ -115,22 +92,17 @@ const isRental = parseFloat(price.replace(/,/g, '')) < 1000;
     });
   }
 
-  // SUUMOのメール解析
   if (site === 'SUUMO') {
     const htmlBody = parsed && parsed.html ? parsed.html : '';
-
-    // HTMLから物件リンクを全部取得
     const linkMatches = htmlBody.matchAll(/href="(https?:\/\/suumo\.jp\/[^"]+)"[^>]*>([^<]+)<\/a>/g);
     const priceMatches = body.matchAll(/(\d+(?:\.\d+)?万円)/g);
     const addressMatches = body.matchAll(/沖縄県([^\n\r]+)/g);
 
-const links = [...linkMatches].filter(m => 
-  (m[1].includes('/ms/') || m[1].includes('/jj/') || m[1].includes('/chintai/')) &&
-  !m[2].includes('登録') &&
-  !m[2].includes('停止') &&
-  !m[2].includes('探す') &&
-  m[2].trim().length > 3
-);
+    const links = [...linkMatches].filter(m =>
+      (m[1].includes('/ms/') || m[1].includes('/jj/') || m[1].includes('/chintai/')) &&
+      !m[2].includes('登録') && !m[2].includes('停止') && !m[2].includes('探す') &&
+      m[2].trim().length > 3
+    );
     const prices = [...priceMatches];
     const addresses = [...addressMatches];
 
@@ -154,8 +126,8 @@ const links = [...linkMatches].filter(m =>
         address: '',
         url: 'https://suumo.jp/okinawa/',
         site,
-type: title.match(/^\d+(\.\d+)?万円/) ? '賃貸' : '売買',
-              received_at: new Date().toISOString()
+        status: '販売中',
+        received_at: new Date().toISOString()
       });
     }
   }
@@ -163,21 +135,23 @@ type: title.match(/^\d+(\.\d+)?万円/) ? '賃貸' : '売買',
   return properties;
 }
 
-async function saveToDB(property) {// 不要なタイトルを除外
-if (!property.title || 
-      property.title.includes('閲覧') ||
-      property.title.includes('メルマガ') ||
-      property.title.includes('会員登録') ||
-      property.title.includes('物件を探す') ||
-      property.title.includes('配信停止') ||
-      property.title === '5,400万円/4LDK/築18年/') {
-  console.log('除外:', property.title);
+async function saveToDB(property, userId) {
+  if (!property.title ||
+    property.title.includes('閲覧') ||
+    property.title.includes('メルマガ') ||
+    property.title.includes('会員登録') ||
+    property.title.includes('物件を探す') ||
+    property.title.includes('配信停止') ||
+    property.title === '5,400万円/4LDK/築18年/') {
+    console.log('除外:', property.title);
     return;
   }
+
   const { data: existing } = await supabase
     .from('properties')
     .select('id')
     .eq('title', property.title)
+    .eq('user_id', userId)
     .limit(1);
 
   if (existing && existing.length > 0) {
@@ -187,7 +161,7 @@ if (!property.title ||
 
   const { error } = await supabase
     .from('properties')
-    .insert(property);
+    .insert({ ...property, user_id: userId });
 
   if (error) {
     console.log('保存エラー:', error.message);
@@ -196,59 +170,106 @@ if (!property.title ||
   }
 }
 
-function fetchMails() {
-  imap.connect();
+function fetchMailsForUser(userId, gmailUser, gmailPass) {
+  return new Promise((resolve, reject) => {
+    const imap = new Imap({
+      user: gmailUser,
+      password: gmailPass,
+      host: 'imap.gmail.com',
+      port: 993,
+      tls: true,
+      tlsOptions: { rejectUnauthorized: false }
+    });
 
-  imap.once('ready', function () {
-    openInbox(function (err, box) {
-      if (err) throw err;
+    imap.once('ready', function () {
+      imap.openBox('INBOX', false, function (err, box) {
+        if (err) { imap.end(); return reject(err); }
 
-      const total = box.messages.total;
-      if (total === 0) {
-        console.log('メールなし');
-        imap.end();
-        return;
-      }
+        const total = box.messages.total;
+        if (total === 0) {
+          console.log('メールなし');
+          imap.end();
+          return;
+        }
 
-      const start = Math.max(1, total - 49);
-      const fetch = imap.fetch(`${start}:${total}`, { bodies: '' });
+        const start = Math.max(1, total - 49);
+        const fetch = imap.fetch(`${start}:${total}`, { bodies: '' });
+        const savePromises = [];
 
-      fetch.on('message', function (msg) {
-        msg.on('body', function (stream) {
-          simpleParser(stream, async (err, parsed) => {
-            if (err) return;
-            const subject = parsed.subject || '';
-            const body = parsed.text || '';
-            const from = parsed.from ? parsed.from.text : '';
+        fetch.on('message', function (msg) {
+          msg.on('body', function (stream) {
+            const p = new Promise((res) => {
+              simpleParser(stream, async (err, parsed) => {
+                if (err) return res();
+                const subject = parsed.subject || '';
+                const body = parsed.text || '';
+                const from = parsed.from ? parsed.from.text : '';
 
-            if (
-              from.includes('athome') ||
-              from.includes('homes') ||
-              from.includes('lifull') ||
-              from.includes('suumo') ||
-              from.includes('kenbiya')
-            ) {
-              const properties = parseProperty(subject, body, from, parsed);
-              for (const property of properties) {
-                await saveToDB(property);
-              }
-            }
+                if (
+                  from.includes('athome') || from.includes('homes') ||
+                  from.includes('lifull') || from.includes('suumo') ||
+                  from.includes('kenbiya')
+                ) {
+                  const properties = parseProperty(subject, body, from, parsed);
+                  for (const property of properties) {
+                    await saveToDB(property, userId);
+                  }
+                }
+                res();
+              });
+            });
+            savePromises.push(p);
           });
         });
-      });
 
-      fetch.once('end', function () {
-        setTimeout(() => {
-          console.log('取得完了！');
-          imap.end();
-        }, 3000);
+        fetch.once('end', function () {
+          setTimeout(async () => {
+            await Promise.all(savePromises);
+            console.log('取得完了！');
+            imap.end();
+          }, 3000);
+        });
       });
     });
-  });
 
-  imap.once('error', function (err) {
-    console.log('エラー:', err);
+    imap.once('error', function (err) {
+      console.log('エラー:', err);
+      reject(err);
+    });
+
+    imap.once('end', resolve);
+    imap.connect();
   });
 }
 
-fetchMails();
+async function main() {
+  const targetUserId = process.env.MAIL_USER_ID;
+
+  if (targetUserId) {
+    await fetchMailsForUser(targetUserId, process.env.GMAIL_USER, process.env.GMAIL_PASS);
+  } else {
+    const { data: users, error } = await supabase
+      .from('user_settings')
+      .select('user_id, gmail_user, gmail_pass')
+      .not('gmail_user', 'is', null)
+      .not('gmail_pass', 'is', null);
+
+    if (error) {
+      console.error('ユーザー設定取得エラー:', error);
+      process.exit(1);
+    }
+
+    for (const user of users || []) {
+      try {
+        console.log(`ユーザー ${user.user_id} のメール取得開始`);
+        await fetchMailsForUser(user.user_id, user.gmail_user, user.gmail_pass);
+      } catch (err) {
+        console.error(`ユーザー ${user.user_id} エラー:`, err.message);
+      }
+    }
+  }
+
+  process.exit(0);
+}
+
+main();
