@@ -395,24 +395,26 @@ async function initAuth() {
   const hash = new URLSearchParams(window.location.hash.replace('#', ''));
   const query = new URLSearchParams(window.location.search);
 
-  // パスワードリセットリンクからの場合はPASSWORD_RECOVERYイベントに任せる
   if (hash.get('type') === 'recovery') {
+    // リセットリンクから開いた場合：すぐにパスワード設定画面を表示
     isRecoveryMode = true;
-    return;
-  }
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('forgotSection').style.display = 'none';
+    document.getElementById('newPasswordSection').style.display = 'block';
+  } else {
+    // OAuthエラーをURLから検出して表示
+    const error = hash.get('error') || query.get('error');
+    const errorDesc = hash.get('error_description') || query.get('error_description');
+    if (error) {
+      document.getElementById('loginError').textContent = `エラー: ${errorDesc || error}`;
+    }
 
-  // OAuthエラーをURLから検出して表示
-  const error = hash.get('error') || query.get('error');
-  const errorDesc = hash.get('error_description') || query.get('error_description');
-  if (error) {
-    document.getElementById('loginError').textContent = `エラー: ${errorDesc || error}`;
-  }
-
-  const { data: { session } } = await sb.auth.getSession();
-  if (session) {
-    currentToken = session.access_token;
-    showApp();
-    loadProperties();
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      currentToken = session.access_token;
+      showApp();
+      loadProperties();
+    }
   }
 
   sb.auth.onAuthStateChange((event, session) => {
