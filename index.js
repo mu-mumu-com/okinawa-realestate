@@ -2,6 +2,7 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 const cron = require('node-cron');
+const { encrypt, decrypt } = require('./crypto-utils');
 
 const app = express();
 
@@ -111,7 +112,7 @@ app.post('/api/fetch-mails', requireAuth, async (req, res) => {
     ...process.env,
     MAIL_USER_ID: req.user.id,
     GMAIL_USER: settings.gmail_user,
-    GMAIL_PASS: settings.gmail_pass
+    GMAIL_PASS: decrypt(settings.gmail_pass)
   };
   execFile('node', ['mail.js'], { env }, (error, stdout) => {
     if (error) return res.status(500).json({ error: error.message });
@@ -139,7 +140,7 @@ app.post('/api/settings', requireAuth, async (req, res) => {
   }
   const { error } = await supabaseAdmin
     .from('user_settings')
-    .upsert({ user_id: req.user.id, gmail_user, gmail_pass }, { onConflict: 'user_id' });
+    .upsert({ user_id: req.user.id, gmail_user, gmail_pass: encrypt(gmail_pass) }, { onConflict: 'user_id' });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
 });

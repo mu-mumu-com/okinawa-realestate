@@ -2,6 +2,7 @@ const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
+const { decrypt } = require('./crypto-utils');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -262,7 +263,7 @@ async function main() {
     for (const user of users || []) {
       try {
         console.log(`ユーザー ${user.user_id} のメール取得開始`);
-        await fetchMailsForUser(user.user_id, user.gmail_user, user.gmail_pass);
+        await fetchMailsForUser(user.user_id, user.gmail_user, decrypt(user.gmail_pass));
       } catch (err) {
         console.error(`ユーザー ${user.user_id} エラー:`, err.message);
       }
