@@ -323,6 +323,15 @@ const typeBadgeClass = {
 
 // 認証チェック
 async function initAuth() {
+  // OAuthエラーをURLから検出して表示
+  const hash = new URLSearchParams(window.location.hash.replace('#', ''));
+  const query = new URLSearchParams(window.location.search);
+  const error = hash.get('error') || query.get('error');
+  const errorDesc = hash.get('error_description') || query.get('error_description');
+  if (error) {
+    document.getElementById('loginError').textContent = `エラー: ${errorDesc || error}`;
+  }
+
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentToken = session.access_token;
