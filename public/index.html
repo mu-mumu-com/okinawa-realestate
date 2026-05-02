@@ -333,7 +333,7 @@ async function initAuth() {
       currentToken = session.access_token;
       showApp();
       loadProperties();
-    } else {
+    } else if (event === 'SIGNED_OUT') {
       showLogin();
     }
   });
