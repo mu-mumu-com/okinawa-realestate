@@ -374,6 +374,7 @@ let selStatus = 'all';
 let selSite = 'all';
 let currentToken = null;
 let currentTab = 'signin';
+let isRecoveryMode = false;
 
 const siteBadgeClass = {
   'アットホーム': 'badge-athome',
@@ -409,16 +410,18 @@ async function initAuth() {
 
   sb.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
+      isRecoveryMode = true;
       document.getElementById('loginForm').style.display = 'none';
       document.getElementById('forgotSection').style.display = 'none';
       document.getElementById('newPasswordSection').style.display = 'block';
       document.getElementById('loginOverlay').style.display = 'flex';
       document.getElementById('loginError').textContent = '';
-    } else if (session) {
+    } else if (session && !isRecoveryMode) {
       currentToken = session.access_token;
       showApp();
       loadProperties();
     } else if (event === 'SIGNED_OUT') {
+      isRecoveryMode = false;
       showLogin();
     }
   });
