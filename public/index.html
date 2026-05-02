@@ -551,6 +551,24 @@ async function fetchMails() {
   btn.disabled = false;
 }
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+function safeUrl(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url);
+    return (u.protocol === 'http:' || u.protocol === 'https:') ? url : '';
+  } catch { return ''; }
+}
+
 function render() {
   const dateVal = document.getElementById('dateFilter').value;
 
@@ -582,29 +600,38 @@ function render() {
     const siteClass = siteBadgeClass[p.site] || 'badge-other';
     const typeLabel = p.status === '成約済み' ? '成約済み' : (p.type || '売買');
     const typeClass = p.status === '成約済み' ? 'badge-sold' : (typeBadgeClass[p.type] || 'badge-sell');
+    const url = safeUrl(p.url);
+    const id = escapeHtml(p.id);
     return `
-    <div class="item ${p.status === '成約済み' ? 'sold' : ''}" onclick="${p.url ? `window.open('${p.url}','_blank')` : ''}">
+    <div class="item ${p.status === '成約済み' ? 'sold' : ''}" ${url ? `data-url="${escapeHtml(url)}"` : ''}>
       <div class="item-badges">
-        <span class="badge ${siteClass}">${p.site}</span>
-        <span class="badge ${typeClass}">${typeLabel}</span>
+        <span class="badge ${siteClass}">${escapeHtml(p.site)}</span>
+        <span class="badge ${typeClass}">${escapeHtml(typeLabel)}</span>
       </div>
       <div class="item-info">
-        <div class="item-title">${p.title || '物件名なし'}</div>
-        <div class="item-price">${p.price || '価格未定'}</div>
-        ${p.address ? `<div class="item-address">📍 ${p.address}</div>` : ''}
+        <div class="item-title">${escapeHtml(p.title) || '物件名なし'}</div>
+        <div class="item-price">${escapeHtml(p.price) || '価格未定'}</div>
+        ${p.address ? `<div class="item-address">📍 ${escapeHtml(p.address)}</div>` : ''}
       </div>
       <div class="item-meta">🕐 ${new Date(p.received_at).toLocaleDateString('ja-JP')}</div>
       <div class="item-actions">
-        <button class="btn-heart" onclick="toggleFavorite('${p.id}', event)">${p.favorite ? '❤️' : '🤍'}</button>
-        ${p.url ? `<a class="item-link" href="${p.url}" target="_blank" onclick="event.stopPropagation()">詳細→</a>` : ''}
+        <button class="btn-heart" onclick="toggleFavorite('${id}', event)">${p.favorite ? '❤️' : '🤍'}</button>
+        ${url ? `<a class="item-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">詳細→</a>` : ''}
         ${p.status !== '成約済み'
-          ? `<button class="btn-sold" onclick="markSold('${p.id}', event)">成約</button>`
-          : `<button class="btn-unsold" onclick="markUnsold('${p.id}', event)">解除</button>`
+          ? `<button class="btn-sold" onclick="markSold('${id}', event)">成約</button>`
+          : `<button class="btn-unsold" onclick="markUnsold('${id}', event)">解除</button>`
         }
       </div>
     </div>`;
   }).join('');
 }
+
+document.getElementById('itemList').addEventListener('click', (e) => {
+  const item = e.target.closest('.item');
+  if (!item || e.target.closest('.item-actions')) return;
+  const url = item.dataset.url;
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
+});
 
 document.querySelectorAll('[data-status]').forEach(btn => {
   btn.addEventListener('click', () => {

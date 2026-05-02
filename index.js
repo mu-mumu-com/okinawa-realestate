@@ -26,8 +26,15 @@ async function requireAuth(req, res, next) {
   next();
 }
 
+const ALLOWED_ORIGINS = [
+  'https://okinawa-realestate.vercel.app',
+  'http://localhost:3000'
+];
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
@@ -82,7 +89,15 @@ app.post('/api/properties/:id/favorite', requireAuth, async (req, res) => {
   res.json({ success: true });
 });
 
+const fetchMailsLastRun = {};
 app.post('/api/fetch-mails', requireAuth, async (req, res) => {
+  const now = Date.now();
+  const last = fetchMailsLastRun[req.user.id] || 0;
+  if (now - last < 5 * 60 * 1000) {
+    return res.status(429).json({ error: '5分以内に再度実行できません' });
+  }
+  fetchMailsLastRun[req.user.id] = now;
+
   const { data: settings } = await supabaseAdmin
     .from('user_settings')
     .select('gmail_user, gmail_pass')
@@ -115,6 +130,13 @@ app.get('/api/settings', requireAuth, async (req, res) => {
 
 app.post('/api/settings', requireAuth, async (req, res) => {
   const { gmail_user, gmail_pass } = req.body;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!gmail_user || !emailRegex.test(gmail_user)) {
+    return res.status(400).json({ error: '有効なメールアドレスを入力してください' });
+  }
+  if (!gmail_pass || gmail_pass.replace(/\s/g, '').length < 16) {
+    return res.status(400).json({ error: 'アプリパスワードは16文字以上必要です' });
+  }
   const { error } = await supabaseAdmin
     .from('user_settings')
     .upsert({ user_id: req.user.id, gmail_user, gmail_pass }, { onConflict: 'user_id' });

@@ -178,7 +178,7 @@ function fetchMailsForUser(userId, gmailUser, gmailPass) {
       host: 'imap.gmail.com',
       port: 993,
       tls: true,
-      tlsOptions: { rejectUnauthorized: false }
+      tlsOptions: { rejectUnauthorized: true }
     });
 
     imap.once('ready', function () {
