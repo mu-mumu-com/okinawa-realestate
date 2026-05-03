@@ -186,52 +186,56 @@ function fetchMailsForUser(userId, gmailUser, gmailPass) {
       imap.openBox('INBOX', false, function (err, box) {
         if (err) { imap.end(); return reject(err); }
 
-        const total = box.messages.total;
-        if (total === 0) {
-          console.log('メールなし');
-          imap.end();
-          return;
-        }
+        const since = new Date();
+        since.setDate(since.getDate() - 30);
 
-        const start = Math.max(1, total - 49);
-        const fetch = imap.fetch(`${start}:${total}`, { bodies: '' });
-        const savePromises = [];
-
-        fetch.on('message', function (msg) {
-          msg.on('body', function (stream) {
-            const p = new Promise((res) => {
-              simpleParser(stream, async (err, parsed) => {
-                if (err) return res();
-                const subject = parsed.subject || '';
-                const body = parsed.text || '';
-                const from = parsed.from ? parsed.from.text : '';
-
-                if (
-                  from.includes('athome') || from.includes('homes') ||
-                  from.includes('lifull') || from.includes('suumo') ||
-                  from.includes('kenbiya')
-                ) {
-                  const properties = parseProperty(subject, body, from, parsed);
-                  for (const property of properties) {
-                    await saveToDB(property, userId);
-                  }
-                }
-                res();
-              });
-            });
-            savePromises.push(p);
-          });
-        });
-
-        fetch.once('end', function () {
-          setTimeout(async () => {
-            await Promise.all(savePromises);
-            console.log('取得完了！');
+        imap.search(['ALL', ['SINCE', since]], function (searchErr, results) {
+          if (searchErr || !results || results.length === 0) {
+            console.log('対象メールなし');
             imap.end();
-          }, 3000);
-        });
-      });
-    });
+            return resolve();
+          }
+
+          console.log(`取得対象: ${results.length}件`);
+          const fetch = imap.fetch(results, { bodies: '' });
+          const savePromises = [];
+
+          fetch.on('message', function (msg) {
+            msg.on('body', function (stream) {
+              const p = new Promise((res) => {
+                simpleParser(stream, async (err, parsed) => {
+                  if (err) return res();
+                  const subject = parsed.subject || '';
+                  const body = parsed.text || '';
+                  const from = parsed.from ? parsed.from.text : '';
+
+                  if (
+                    from.includes('athome') || from.includes('homes') ||
+                    from.includes('lifull') || from.includes('suumo') ||
+                    from.includes('kenbiya')
+                  ) {
+                    const properties = parseProperty(subject, body, from, parsed);
+                    for (const property of properties) {
+                      await saveToDB(property, userId);
+                    }
+                  }
+                  res();
+                });
+              });
+              savePromises.push(p);
+            });
+          });
+
+          fetch.once('end', function () {
+            setTimeout(async () => {
+              await Promise.all(savePromises);
+              console.log('取得完了！');
+              imap.end();
+            }, 3000);
+          });
+        }); // imap.search
+      }); // imap.openBox
+    }); // imap.once('ready')
 
     imap.once('error', function (err) {
       console.log('エラー:', err);
