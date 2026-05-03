@@ -2,6 +2,14 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 const cron = require('node-cron');
+const nodemailer = require('nodemailer');
+
+const contactTransporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: { user: 'okinawa.realestate.notify@gmail.com', pass: process.env.CONTACT_GMAIL_PASS }
+});
 const { encrypt, decrypt } = require('./crypto-utils');
 
 const app = express();
@@ -143,6 +151,41 @@ app.post('/api/settings', requireAuth, async (req, res) => {
     .upsert({ user_id: req.user.id, gmail_user, gmail_pass: encrypt(gmail_pass) }, { onConflict: 'user_id' });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ success: true });
+});
+
+const contactLastRun = {};
+app.post('/api/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!name || !email || !subject || !message) {
+    return res.status(400).json({ error: '全ての項目を入力してください' });
+  }
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'メールアドレスの形式が正しくありません' });
+  }
+  const now = Date.now();
+  if (contactLastRun[email] && now - contactLastRun[email] < 60 * 1000) {
+    return res.status(429).json({ error: '送信間隔が短すぎます。しばらく待ってから再送してください。' });
+  }
+  contactLastRun[email] = now;
+  try {
+    await contactTransporter.sendMail({
+      from: '"沖縄不動産まとめ" <okinawa.realestate.notify@gmail.com>',
+      to: 'okinawa.realestate.notify@gmail.com',
+      subject: `[お問い合わせ] ${subject}`,
+      text: `お名前: ${name}\nメール: ${email}\n件名: ${subject}\n\n${message}`
+    });
+    await contactTransporter.sendMail({
+      from: '"沖縄不動産まとめ" <okinawa.realestate.notify@gmail.com>',
+      to: email,
+      subject: '【自動返信】お問い合わせを受け付けました',
+      text: `${name} 様\n\nお問い合わせいただきありがとうございます。\n内容を確認後、ご返信いたします。\n\n---\n件名: ${subject}\n\n${message}\n---\n\n沖縄不動産まとめ`
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('お問い合わせメール送信エラー:', err);
+    res.status(500).json({ error: 'メールの送信に失敗しました' });
+  }
 });
 
 cron.schedule('0 16 * * *', async () => {
