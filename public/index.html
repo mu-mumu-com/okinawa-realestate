@@ -718,14 +718,15 @@ async function initAuth() {
     }
 
     const paymentStatus = query.get('payment');
-    if (paymentStatus === 'success') {
+    const afterPayment = paymentStatus === 'success';
+    if (afterPayment) {
       history.replaceState(null, '', window.location.pathname);
       showToast('お支払いが完了しました。ご利用ありがとうございます！');
     }
 
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
-      await authorizeAndEnter(session.access_token);
+      await authorizeAndEnter(session.access_token, afterPayment);
     }
   }
 
@@ -746,7 +747,7 @@ async function initAuth() {
   });
 }
 
-async function authorizeAndEnter(token) {
+async function authorizeAndEnter(token, afterPayment = false) {
   try {
     const res = await fetch(`${API}/api/check-access`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -763,12 +764,18 @@ async function authorizeAndEnter(token) {
     return;
   }
 
-  // サブスクリプション確認
+  // サブスクリプション確認（決済直後はWebhook処理を待ってリトライ）
   try {
-    const subRes = await fetch(`${API}/api/subscription-status`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    const sub = await subRes.json();
+    const maxTries = afterPayment ? 6 : 1;
+    let sub = { active: false, status: 'inactive' };
+    for (let i = 0; i < maxTries; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 2000));
+      const subRes = await fetch(`${API}/api/subscription-status`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      sub = await subRes.json();
+      if (sub.active) break;
+    }
     if (!sub.active) {
       currentToken = token;
       showPaywall(sub.status);
