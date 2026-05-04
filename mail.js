@@ -62,6 +62,8 @@ function parseProperty(subject, body, from, parsed) {
       .replace(/｜LIFULL HOME'S新着お知らせメール/u, '')
       .replace(/\|LIFULL HOME'S新着お知らせメール/u, '')
       .replace(/\/ほか$/, '')
+      .replace(/\d[\d,.]+万円\/?$/, '')
+      .replace(/[・\/]\s*$/, '')
       .trim();
 
     const price = priceMatch[1];
@@ -82,7 +84,7 @@ function parseProperty(subject, body, from, parsed) {
     const priceMatch = subject.match(/(\d[\d,]+万円)/);
     const urlMatch = body.match(/https?:\/\/www\.kenbiya\.com\/[^\s\n]+/);
     properties.push({
-      title: subject.replace('新着物件：', '').trim(),
+      title: subject.replace('新着物件：', '').replace(/\s*\d[\d,]+万円.*$/, '').trim(),
       price: priceMatch ? priceMatch[1] : '',
       address: '',
       url: urlMatch ? urlMatch[0] : '',

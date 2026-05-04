@@ -141,6 +141,9 @@ main { padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
 .badge-rent { background: #fff3e0; color: #e07b00; }
 .badge-invest { background: #f3e8fd; color: #5a189a; }
 .badge-sold { background: #f0f0f0; color: #888; }
+.badge-new { background: #e8f8e8; color: #1a7a2a; }
+.badge-used { background: #fef8e8; color: #8a6200; }
+.badge-land { background: #fdf0e8; color: #8a4000; }
 .item-info { flex: 1; min-width: 0; }
 .item-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .item-price { font-size: 15px; font-weight: 900; color: var(--ocean); }
@@ -582,6 +585,34 @@ const typeBadgeClass = {
   '成約済み': 'badge-sold'
 };
 
+function titleStripPrice(title) {
+  return (title || '')
+    .replace(/\d[\d,]+万円\/?/g, '')
+    .replace(/[・\/]\s*$/, '')
+    .replace(/^\s*[・\/]/, '')
+    .trim() || '物件名なし';
+}
+
+function getConditionBadge(title) {
+  if (!title) return '';
+  const aged = title.match(/築(\d+)年/);
+  if (aged) return `<span class="badge badge-used">築${aged[1]}年</span>`;
+  if (title.includes('新築')) return `<span class="badge badge-new">新築</span>`;
+  if (title.includes('中古')) return `<span class="badge badge-used">中古</span>`;
+  if (title.includes('売地') || (title.includes('土地') && !title.includes('建物'))) return `<span class="badge badge-land">土地</span>`;
+  return '';
+}
+
+function getDisplayAddress(title, address) {
+  if (address) return address;
+  if (!title) return '';
+  const slashLoc = title.match(/^([^/・\n]{2,15}[市町村区])/);
+  if (slashLoc) return slashLoc[1];
+  const slash = title.match(/^(.+?)\//);
+  if (slash && slash[1].length <= 15) return slash[1];
+  return '';
+}
+
 // 認証チェック
 async function initAuth() {
   const hash = new URLSearchParams(window.location.hash.replace('#', ''));
@@ -910,16 +941,20 @@ function render() {
     const typeClass = p.status === '成約済み' ? 'badge-sold' : (typeBadgeClass[p.type] || 'badge-sell');
     const url = safeUrl(p.url);
     const id = escapeHtml(p.id);
+    const displayTitle = titleStripPrice(p.title);
+    const conditionBadge = getConditionBadge(p.title);
+    const displayAddress = getDisplayAddress(p.title, p.address);
     return `
     <div class="item ${p.status === '成約済み' ? 'sold' : ''}" ${url ? `data-url="${escapeHtml(url)}"` : ''}>
       <div class="item-badges">
         <span class="badge ${siteClass}">${escapeHtml(p.site)}</span>
         <span class="badge ${typeClass}">${escapeHtml(typeLabel)}</span>
+        ${conditionBadge}
       </div>
       <div class="item-info">
-        <div class="item-title">${escapeHtml(p.title) || '物件名なし'}</div>
+        <div class="item-title">${escapeHtml(displayTitle)}</div>
         <div class="item-price">${escapeHtml(p.price) || '価格未定'}</div>
-        ${p.address ? `<div class="item-address">📍 ${escapeHtml(p.address)}</div>` : ''}
+        ${displayAddress ? `<div class="item-address">📍 ${escapeHtml(displayAddress)}</div>` : ''}
       </div>
       <div class="item-meta">🕐 ${new Date(p.received_at).toLocaleDateString('ja-JP')}</div>
       <div class="item-actions">
