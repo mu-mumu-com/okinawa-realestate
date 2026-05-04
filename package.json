@@ -20,6 +20,7 @@
     "mailparser": "^3.9.8",
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.7",
-    "rss-parser": "^3.13.0"
+    "rss-parser": "^3.13.0",
+    "stripe": "^22.1.0"
   }
 }

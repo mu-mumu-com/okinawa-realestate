@@ -276,6 +276,19 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
   </div>
 </div>
 
+<!-- 決済ウォール -->
+<div id="paywallOverlay" style="display:none; position:fixed; inset:0; background:linear-gradient(135deg, var(--dark), var(--ocean)); z-index:999; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:white; border-radius:16px; padding:40px 32px; width:100%; max-width:420px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+    <div style="width:56px; height:56px; background:var(--ocean2); border-radius:12px; display:inline-flex; align-items:center; justify-content:center; font-size:28px; margin-bottom:16px;">🏠</div>
+    <div style="font-size:18px; font-weight:900; color:var(--dark); margin-bottom:6px;">沖縄不動産 新着まとめ</div>
+    <div style="font-size:12px; color:var(--muted); margin-bottom:24px;">沖縄の不動産新着情報を自動収集・一覧表示するサービスです</div>
+    <div id="paywallPlanBox" style="background:#f0f7ff; border-radius:10px; padding:16px 20px; margin-bottom:24px; text-align:left; font-size:13px; line-height:1.8; color:var(--dark);"></div>
+    <button id="subscribeBtn" onclick="startCheckout()" style="width:100%; padding:14px; background:var(--ocean2); color:white; border:none; border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; margin-bottom:10px;">サブスクリプションを開始する</button>
+    <div id="paywallError" style="color:#e05c3a; font-size:12px; margin-bottom:10px; display:none;"></div>
+    <button onclick="logout()" style="background:none; border:none; color:var(--muted); font-size:12px; cursor:pointer; font-family:inherit; text-decoration:underline;">ログアウト</button>
+  </div>
+</div>
+
 <!-- 設定モーダル -->
 <div id="settingsModal">
   <div class="modal-box">
@@ -704,6 +717,12 @@ async function initAuth() {
       document.getElementById('loginError').textContent = `エラー: ${errorDesc || error}`;
     }
 
+    const paymentStatus = query.get('payment');
+    if (paymentStatus === 'success') {
+      history.replaceState(null, '', window.location.pathname);
+      showToast('お支払いが完了しました。ご利用ありがとうございます！');
+    }
+
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
       await authorizeAndEnter(session.access_token);
@@ -743,9 +762,62 @@ async function authorizeAndEnter(token) {
     document.getElementById('loginError').textContent = 'アクセス確認中にエラーが発生しました。';
     return;
   }
+
+  // サブスクリプション確認
+  try {
+    const subRes = await fetch(`${API}/api/subscription-status`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const sub = await subRes.json();
+    if (!sub.active) {
+      currentToken = token;
+      showPaywall(sub.status);
+      return;
+    }
+  } catch {
+    // Stripe未設定時はスルー
+  }
+
   currentToken = token;
   showApp();
   loadProperties();
+}
+
+function showPaywall(status) {
+  const overlay = document.getElementById('paywallOverlay');
+  overlay.style.display = 'flex';
+  const trialDays = 14;
+  let html = `<div style="font-size:15px; font-weight:700; margin-bottom:8px;">月額プラン</div>`;
+  if (trialDays > 0) {
+    html += `<div>✅ <strong>${trialDays}日間無料トライアル</strong>あり</div>`;
+    html += `<div style="color:var(--muted); font-size:12px; margin-top:4px;">トライアル期間中はいつでもキャンセル可能です</div>`;
+  }
+  if (status === 'canceled') {
+    html = `<div style="color:#e05c3a;">サブスクリプションがキャンセルされています。</div><div style="margin-top:8px;">再度ご登録いただくことでご利用いただけます。</div>`;
+  }
+  document.getElementById('paywallPlanBox').innerHTML = html;
+}
+
+async function startCheckout() {
+  const btn = document.getElementById('subscribeBtn');
+  const errEl = document.getElementById('paywallError');
+  btn.disabled = true;
+  btn.textContent = '処理中...';
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch(`${API}/api/create-checkout-session`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${currentToken}` }
+    });
+    const { url, error } = await res.json();
+    if (error) throw new Error(error);
+    window.location.href = url;
+  } catch (e) {
+    errEl.textContent = e.message || '決済ページへの移動に失敗しました';
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'サブスクリプションを開始する';
+  }
 }
 
 function showApp() {

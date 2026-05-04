@@ -3,6 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
+const Stripe = require('stripe');
 
 const contactTransporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -49,8 +50,91 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
 });
+// Stripe webhookはexpress.json()より前にraw bodyが必要
+app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) return res.json({ received: true });
+  const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+  const obj = event.data.object;
+  const updateableEvents = [
+    'customer.subscription.created',
+    'customer.subscription.updated',
+    'customer.subscription.deleted'
+  ];
+  if (updateableEvents.includes(event.type)) {
+    await supabaseAdmin
+      .from('user_settings')
+      .update({
+        subscription_status: obj.status,
+        subscription_end_at: obj.current_period_end
+          ? new Date(obj.current_period_end * 1000).toISOString()
+          : null
+      })
+      .eq('stripe_customer_id', obj.customer);
+  }
+  res.json({ received: true });
+});
+
 app.use(express.json());
 app.use(express.static('public'));
+
+app.get('/api/subscription-status', requireAuth, async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) return res.json({ active: true, status: 'active' });
+  const { data } = await supabaseAdmin
+    .from('user_settings')
+    .select('subscription_status, subscription_end_at')
+    .eq('user_id', req.user.id)
+    .single();
+  const status = data?.subscription_status || 'inactive';
+  const active = ['active', 'trialing'].includes(status);
+  res.json({ active, status, end_at: data?.subscription_end_at });
+});
+
+app.post('/api/create-checkout-session', requireAuth, async (req, res) => {
+  if (!process.env.STRIPE_SECRET_KEY) return res.status(500).json({ error: 'Stripe未設定' });
+  const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+  const user = req.user;
+
+  const { data: settings } = await supabaseAdmin
+    .from('user_settings')
+    .select('stripe_customer_id')
+    .eq('user_id', user.id)
+    .single();
+
+  let customerId = settings?.stripe_customer_id;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: user.email,
+      metadata: { supabase_user_id: user.id }
+    });
+    customerId = customer.id;
+    await supabaseAdmin
+      .from('user_settings')
+      .upsert({ user_id: user.id, stripe_customer_id: customerId }, { onConflict: 'user_id' });
+  }
+
+  const trialDays = parseInt(process.env.STRIPE_TRIAL_DAYS || '0');
+  const appUrl = process.env.APP_URL || 'https://okinawa-realestate.vercel.app';
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    payment_method_types: ['card'],
+    line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+    mode: 'subscription',
+    subscription_data: trialDays > 0 ? { trial_period_days: trialDays } : undefined,
+    success_url: `${appUrl}?payment=success`,
+    cancel_url: `${appUrl}?payment=cancel`,
+    locale: 'ja',
+  });
+
+  res.json({ url: session.url });
+});
 
 app.get('/api/check-access', requireAuth, (req, res) => {
   const allowedEmails = (process.env.ALLOWED_EMAILS || '')
