@@ -619,6 +619,7 @@ let selSite = 'all';
 let currentToken = null;
 let currentTab = 'signin';
 let isRecoveryMode = false;
+let isAfterPayment = false;
 
 const siteBadgeClass = {
   'アットホーム': 'badge-athome',
@@ -718,15 +719,10 @@ async function initAuth() {
     }
 
     const paymentStatus = query.get('payment');
-    const afterPayment = paymentStatus === 'success';
-    if (afterPayment) {
+    if (paymentStatus === 'success') {
+      isAfterPayment = true;
       history.replaceState(null, '', window.location.pathname);
       showToast('お支払いが完了しました。ご利用ありがとうございます！');
-    }
-
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      await authorizeAndEnter(session.access_token, afterPayment);
     }
   }
 
@@ -739,7 +735,9 @@ async function initAuth() {
       document.getElementById('loginOverlay').style.display = 'flex';
       document.getElementById('loginError').textContent = '';
     } else if (session && !isRecoveryMode) {
-      await authorizeAndEnter(session.access_token);
+      const flag = isAfterPayment;
+      isAfterPayment = false;
+      await authorizeAndEnter(session.access_token, flag);
     } else if (event === 'SIGNED_OUT') {
       isRecoveryMode = false;
       showLogin();
@@ -830,6 +828,7 @@ async function startCheckout() {
 
 function showApp() {
   document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('paywallOverlay').style.display = 'none';
 }
 
 function showLogin() {
