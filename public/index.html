@@ -547,13 +547,11 @@ async function initAuth() {
 
     const { data: { session } } = await sb.auth.getSession();
     if (session) {
-      currentToken = session.access_token;
-      showApp();
-      loadProperties();
+      await authorizeAndEnter(session.access_token);
     }
   }
 
-  sb.auth.onAuthStateChange((event, session) => {
+  sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
       isRecoveryMode = true;
       document.getElementById('loginForm').style.display = 'none';
@@ -562,14 +560,33 @@ async function initAuth() {
       document.getElementById('loginOverlay').style.display = 'flex';
       document.getElementById('loginError').textContent = '';
     } else if (session && !isRecoveryMode) {
-      currentToken = session.access_token;
-      showApp();
-      loadProperties();
+      await authorizeAndEnter(session.access_token);
     } else if (event === 'SIGNED_OUT') {
       isRecoveryMode = false;
       showLogin();
     }
   });
+}
+
+async function authorizeAndEnter(token) {
+  try {
+    const res = await fetch(`${API}/api/check-access`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const { allowed } = await res.json();
+    if (!allowed) {
+      await sb.auth.signOut();
+      document.getElementById('loginError').textContent = 'アクセスが許可されていません。管理者にお問い合わせください。';
+      return;
+    }
+  } catch {
+    await sb.auth.signOut();
+    document.getElementById('loginError').textContent = 'アクセス確認中にエラーが発生しました。';
+    return;
+  }
+  currentToken = token;
+  showApp();
+  loadProperties();
 }
 
 function showApp() {
@@ -617,16 +634,17 @@ async function handleAuth() {
     return;
   }
 
-  currentToken = result.data.session?.access_token;
-  if (currentTab === 'signup' && !currentToken) {
+  const token = result.data.session?.access_token;
+  if (currentTab === 'signup' && !token) {
     errEl.textContent = '確認メールを送信しました。メールを確認してからログインしてください。';
     btn.disabled = false;
     btn.textContent = '新規登録';
     return;
   }
 
-  showApp();
-  loadProperties();
+  btn.disabled = false;
+  btn.textContent = currentTab === 'signin' ? 'ログイン' : '新規登録';
+  await authorizeAndEnter(token);
 }
 
 function showForgotPassword() {

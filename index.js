@@ -52,6 +52,16 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static('public'));
 
+app.get('/api/check-access', requireAuth, (req, res) => {
+  const allowedEmails = (process.env.ALLOWED_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (allowedEmails.length === 0) return res.json({ allowed: true });
+  const allowed = allowedEmails.includes(req.user.email.toLowerCase());
+  res.json({ allowed });
+});
+
 app.get('/api/properties', requireAuth, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const supabase = getUserClient(req.token);
