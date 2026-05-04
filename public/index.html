@@ -587,9 +587,10 @@ const typeBadgeClass = {
 
 function titleStripPrice(title) {
   return (title || '')
-    .replace(/\d[\d,]+万円\/?/g, '')
+    .replace(/\d[\d,.]*(?:万円|億円?)\/?/g, '')
     .replace(/[・\/]\s*$/, '')
-    .replace(/^\s*[・\/]/, '')
+    .replace(/^\s*[・\/\s]/, '')
+    .replace(/\s{2,}/g, ' ')
     .trim() || '物件名なし';
 }
 
@@ -943,7 +944,7 @@ function render() {
     const id = escapeHtml(p.id);
     const displayTitle = titleStripPrice(p.title);
     const conditionBadge = getConditionBadge(p.title);
-    const displayAddress = getDisplayAddress(p.title, p.address);
+    const displayAddress = getDisplayAddress(displayTitle, p.address);
     return `
     <div class="item ${p.status === '成約済み' ? 'sold' : ''}" ${url ? `data-url="${escapeHtml(url)}"` : ''}>
       <div class="item-badges">
@@ -959,7 +960,6 @@ function render() {
       <div class="item-meta">🕐 ${new Date(p.received_at).toLocaleDateString('ja-JP')}</div>
       <div class="item-actions">
         <button class="btn-heart" onclick="toggleFavorite('${id}', event)">${p.favorite ? '❤️' : '🤍'}</button>
-        ${url ? `<a class="item-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">詳細→</a>` : ''}
         ${p.status !== '成約済み'
           ? `<button class="btn-sold" onclick="markSold('${id}', event)">成約</button>`
           : `<button class="btn-unsold" onclick="markUnsold('${id}', event)">解除</button>`
