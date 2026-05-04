@@ -784,6 +784,7 @@ async function authorizeAndEnter(token) {
 }
 
 function showPaywall(status) {
+  document.getElementById('loginOverlay').style.display = 'none';
   const overlay = document.getElementById('paywallOverlay');
   overlay.style.display = 'flex';
   const trialDays = 14;
