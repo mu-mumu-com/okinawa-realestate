@@ -345,23 +345,16 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
     <a href="https://www.e-uchina.net/" target="_blank" style="padding:4px 10px; border-radius:16px; border:1.5px solid var(--border); background:white; font-size:11px; color:var(--text); text-decoration:none; font-weight:500;">🏠 うちなーらいふ</a>
     <a href="https://goohome.jp/" target="_blank" style="padding:4px 10px; border-radius:16px; border:1.5px solid var(--border); background:white; font-size:11px; color:var(--text); text-decoration:none; font-weight:500;">🏡 グーホーム</a>
   </div>
-  <div class="filter-row">
-    <span class="filter-label">日付</span>
+  <div class="filter-row" style="gap:8px; flex-wrap:wrap;">
     <select class="date-select" id="dateFilter" onchange="onFilterChange()">
       <option value="today">今日</option>
       <option value="yesterday">昨日</option>
       <option value="week">1週間</option>
       <option value="month">1ヶ月</option>
     </select>
-  </div>
-  <div class="filter-row">
-    <span class="filter-label">検索</span>
-    <input type="text" id="searchInput" class="search-input" placeholder="物件名・住所で検索" oninput="onFilterChange()">
-  </div>
-  <div class="filter-row">
-    <span class="filter-label">地域</span>
+    <input type="text" id="searchInput" class="search-input" placeholder="🔍 物件名・住所で検索" oninput="onFilterChange()">
     <select id="regionFilter" class="date-select" onchange="onFilterChange()">
-      <option value="">すべての地域</option>
+      <option value="">📍 すべての地域</option>
       <optgroup label="那覇・南部">
         <option>那覇市</option><option>浦添市</option><option>豊見城市</option>
         <option>糸満市</option><option>南城市</option><option>与那原町</option>
@@ -381,13 +374,12 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
         <option>宮古島市</option><option>石垣市</option><option>竹富町</option><option>与那国町</option>
       </optgroup>
     </select>
-  </div>
-  <div class="filter-row">
-    <span class="filter-label">価格</span>
-    <input type="number" id="priceMin" class="price-input" placeholder="下限" min="0" oninput="onFilterChange()">
-    <span style="font-size:11px; color:var(--muted); padding:0 4px;">〜</span>
-    <input type="number" id="priceMax" class="price-input" placeholder="上限" min="0" oninput="onFilterChange()">
-    <span style="font-size:11px; color:var(--muted);">万円</span>
+    <div style="display:flex; align-items:center; gap:4px;">
+      <input type="number" id="priceMin" class="price-input" placeholder="下限" min="0" oninput="onFilterChange()">
+      <span style="font-size:11px; color:var(--muted);">〜</span>
+      <input type="number" id="priceMax" class="price-input" placeholder="上限" min="0" oninput="onFilterChange()">
+      <span style="font-size:11px; color:var(--muted);">万円</span>
+    </div>
   </div>
 </div>
 
@@ -1010,7 +1002,10 @@ function render() {
       const hay = ((p.title || '') + ' ' + (p.address || '')).toLowerCase();
       if (!hay.includes(searchVal)) return false;
     }
-    if (regionVal && !((p.title || '') + (p.address || '')).includes(regionVal)) return false;
+    if (regionVal) {
+      const regionRoot = regionVal.replace(/[市町村区]$/, '');
+      if (!((p.title || '') + (p.address || '')).includes(regionRoot)) return false;
+    }
     if (priceMinVal !== null || priceMaxVal !== null) {
       const price = parsePrice(p.price);
       if (price === null) return false;
@@ -1065,13 +1060,15 @@ function render() {
       </div>
       <div class="item-info">
         <div class="item-title">${escapeHtml(displayTitle)}</div>
-        <div class="item-price">${escapeHtml(p.price) || '価格未定'}</div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="item-price">${escapeHtml(p.price) || '価格未定'}</div>
+          ${isHomes ? `<button class="btn-copy" onclick="copyToClipboard(this.closest('.item').dataset.copytext); event.stopPropagation();">コピー</button>` : ''}
+        </div>
         ${displayAddress ? `<div class="item-address">📍 ${escapeHtml(displayAddress)}</div>` : ''}
       </div>
       <div class="item-meta">🕐 ${new Date(p.received_at).toLocaleDateString('ja-JP')}</div>
       <div class="item-actions">
         <button class="btn-heart" onclick="toggleFavorite('${id}', event)">${p.favorite ? '❤️' : '🤍'}</button>
-        ${isHomes ? `<button class="btn-copy" onclick="copyToClipboard(this.closest('.item').dataset.copytext); event.stopPropagation();">コピー</button>` : ''}
         ${p.status !== '成約済み'
           ? `<button class="btn-sold" onclick="markSold('${id}', event)">成約</button>`
           : `<button class="btn-unsold" onclick="markUnsold('${id}', event)">解除</button>`
