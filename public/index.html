@@ -158,6 +158,12 @@ main { padding: 12px 16px; max-width: 1200px; margin: 0 auto; }
 .empty { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
 .loading { text-align: center; padding: 40px 16px; color: var(--muted); font-size: 13px; }
 footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--muted); border-top: 1px solid var(--border); margin-top: 24px; }
+.search-input { padding: 4px 10px; border-radius: 16px; border: 1.5px solid var(--border); font-size: 11px; font-family: inherit; color: var(--text); background: white; width: 200px; }
+.price-input { padding: 4px 8px; border-radius: 6px; border: 1.5px solid var(--border); font-size: 11px; font-family: inherit; color: var(--text); background: white; width: 72px; text-align: right; }
+.page-btn { padding: 5px 16px; border-radius: 6px; border: 1.5px solid var(--border); background: white; font-size: 12px; cursor: pointer; font-family: inherit; color: var(--text); font-weight: 600; }
+.page-btn:disabled { opacity: 0.3; cursor: default; }
+.btn-copy { font-size: 10px; padding: 3px 8px; border-radius: 4px; border: 1px solid #0066cc; background: white; color: #0066cc; cursor: pointer; font-family: inherit; font-weight: 600; white-space: nowrap; }
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.82); color: white; padding: 9px 22px; border-radius: 20px; font-size: 12px; z-index: 2000; opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap; }
 
 @media (max-width: 600px) {
   /* ログイン */
@@ -341,20 +347,58 @@ footer { text-align: center; padding: 20px 16px; font-size: 10px; color: var(--m
   </div>
   <div class="filter-row">
     <span class="filter-label">日付</span>
-    <div class="date-filter">
-      <select class="date-select" id="dateFilter" onchange="render()">
-        <option value="today">今日</option>
-        <option value="yesterday">昨日</option>
-        <option value="week">1週間</option>
-        <option value="month">1ヶ月</option>
-      </select>
-    </div>
+    <select class="date-select" id="dateFilter" onchange="onFilterChange()">
+      <option value="today">今日</option>
+      <option value="yesterday">昨日</option>
+      <option value="week">1週間</option>
+      <option value="month">1ヶ月</option>
+    </select>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">検索</span>
+    <input type="text" id="searchInput" class="search-input" placeholder="物件名・住所で検索" oninput="onFilterChange()">
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">地域</span>
+    <select id="regionFilter" class="date-select" onchange="onFilterChange()">
+      <option value="">すべての地域</option>
+      <optgroup label="那覇・南部">
+        <option>那覇市</option><option>浦添市</option><option>豊見城市</option>
+        <option>糸満市</option><option>南城市</option><option>与那原町</option>
+        <option>南風原町</option><option>八重瀬町</option>
+      </optgroup>
+      <optgroup label="中部">
+        <option>沖縄市</option><option>うるま市</option><option>宜野湾市</option>
+        <option>北谷町</option><option>嘉手納町</option><option>読谷村</option>
+        <option>中城村</option><option>西原町</option>
+      </optgroup>
+      <optgroup label="北部">
+        <option>名護市</option><option>恩納村</option><option>本部町</option>
+        <option>今帰仁村</option><option>大宜味村</option><option>国頭村</option>
+        <option>東村</option><option>宜野座村</option><option>金武町</option>
+      </optgroup>
+      <optgroup label="離島">
+        <option>宮古島市</option><option>石垣市</option><option>竹富町</option><option>与那国町</option>
+      </optgroup>
+    </select>
+  </div>
+  <div class="filter-row">
+    <span class="filter-label">価格</span>
+    <input type="number" id="priceMin" class="price-input" placeholder="下限" min="0" oninput="onFilterChange()">
+    <span style="font-size:11px; color:var(--muted); padding:0 4px;">〜</span>
+    <input type="number" id="priceMax" class="price-input" placeholder="上限" min="0" oninput="onFilterChange()">
+    <span style="font-size:11px; color:var(--muted);">万円</span>
   </div>
 </div>
 
 <main>
   <div class="section-title">物件一覧</div>
   <div class="list" id="itemList"><div class="loading">読み込み中...</div></div>
+  <div id="pagination" style="display:none; justify-content:center; align-items:center; gap:16px; margin-top:16px; padding:8px 0;">
+    <button id="prevPage" class="page-btn" onclick="changePage(-1)">← 前へ</button>
+    <span id="pageInfo" style="font-size:12px; color:var(--muted);"></span>
+    <button id="nextPage" class="page-btn" onclick="changePage(1)">次へ →</button>
+  </div>
 </main>
 
 <footer>
@@ -612,6 +656,41 @@ function getDisplayAddress(title, address) {
   const slash = title.match(/^(.+?)\//);
   if (slash && slash[1].length <= 15) return slash[1];
   return '';
+}
+
+let currentPage = 1;
+const ITEMS_PER_PAGE = 10;
+
+function parsePrice(priceStr) {
+  if (!priceStr) return null;
+  const oku = priceStr.match(/(\d[\d,.]*)億/);
+  if (oku) return parseFloat(oku[1].replace(/,/g, '')) * 10000;
+  const man = priceStr.match(/(\d[\d,.]*)万/);
+  if (man) return parseFloat(man[1].replace(/,/g, ''));
+  return null;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2200);
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => showToast('コピーしました'));
+}
+
+function onFilterChange() {
+  currentPage = 1;
+  render();
+}
+
+function changePage(dir) {
+  currentPage += dir;
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // 認証チェック
@@ -911,21 +990,35 @@ function safeUrl(url) {
 
 function render() {
   const dateVal = document.getElementById('dateFilter').value;
+  const searchVal = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  const regionVal = document.getElementById('regionFilter')?.value || '';
+  const priceMinVal = parseFloat(document.getElementById('priceMin')?.value) || null;
+  const priceMaxVal = parseFloat(document.getElementById('priceMax')?.value) || null;
 
   const list = allData.filter(p => {
     const { from, to } = getDateRange(dateVal);
     const pDate = new Date(p.received_at);
     if (pDate < from) return false;
     if (to && pDate >= to) return false;
-    if (selStatus === 'favorite') return p.favorite;
-    if (selStatus === '販売中') return p.type === '売買' && p.status === '販売中';
-    if (selStatus === '賃貸') return p.type === '賃貸';
-    if (selStatus === '収益') return p.type === '収益';
-    if (selStatus === '成約済み') return p.status === '成約済み';
-    if (selStatus !== 'all') return false;
+    if (selStatus === 'favorite') { if (!p.favorite) return false; }
+    else if (selStatus === '販売中') { if (!(p.type === '売買' && p.status === '販売中')) return false; }
+    else if (selStatus === '賃貸') { if (p.type !== '賃貸') return false; }
+    else if (selStatus === '収益') { if (p.type !== '収益') return false; }
+    else if (selStatus === '成約済み') { if (p.status !== '成約済み') return false; }
     if (selSite !== 'all' && p.site !== selSite) return false;
+    if (searchVal) {
+      const hay = ((p.title || '') + ' ' + (p.address || '')).toLowerCase();
+      if (!hay.includes(searchVal)) return false;
+    }
+    if (regionVal && !((p.title || '') + (p.address || '')).includes(regionVal)) return false;
+    if (priceMinVal !== null || priceMaxVal !== null) {
+      const price = parsePrice(p.price);
+      if (price === null) return false;
+      if (priceMinVal !== null && price < priceMinVal) return false;
+      if (priceMaxVal !== null && price > priceMaxVal) return false;
+    }
     return true;
-  }).filter(p => selSite === 'all' || p.site === selSite);
+  });
 
   document.getElementById('statTotal').textContent = list.length;
   document.getElementById('statSelling').textContent = allData.filter(p => p.type === '売買' && p.status === '販売中').length;
@@ -933,10 +1026,24 @@ function render() {
   document.getElementById('statFav').textContent = allData.filter(p => p.favorite).length;
   document.getElementById('statSold').textContent = allData.filter(p => p.status === '成約済み').length;
 
-  const container = document.getElementById('itemList');
-  if (!list.length) { container.innerHTML = '<div class="empty">条件に一致する物件がありません</div>'; return; }
+  const totalPages = Math.max(1, Math.ceil(list.length / ITEMS_PER_PAGE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  const pageItems = list.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  container.innerHTML = list.map(p => {
+  const pagination = document.getElementById('pagination');
+  if (list.length > ITEMS_PER_PAGE) {
+    pagination.style.display = 'flex';
+    document.getElementById('pageInfo').textContent = `${currentPage} / ${totalPages}ページ（全${list.length}件）`;
+    document.getElementById('prevPage').disabled = currentPage <= 1;
+    document.getElementById('nextPage').disabled = currentPage >= totalPages;
+  } else {
+    pagination.style.display = 'none';
+  }
+
+  const container = document.getElementById('itemList');
+  if (!pageItems.length) { container.innerHTML = '<div class="empty">条件に一致する物件がありません</div>'; return; }
+
+  container.innerHTML = pageItems.map(p => {
     const siteClass = siteBadgeClass[p.site] || 'badge-other';
     const typeLabel = p.status === '成約済み' ? '成約済み' : (p.type || '売買');
     const typeClass = p.status === '成約済み' ? 'badge-sold' : (typeBadgeClass[p.type] || 'badge-sell');
@@ -945,8 +1052,12 @@ function render() {
     const displayTitle = titleStripPrice(p.title);
     const conditionBadge = getConditionBadge(p.title);
     const displayAddress = getDisplayAddress(displayTitle, p.address);
+    const isHomes = p.site === "HOME'S";
+    const itemAttrs = isHomes
+      ? `data-homes="true" data-copytext="${escapeHtml(displayTitle)}"`
+      : url ? `data-url="${escapeHtml(url)}"` : '';
     return `
-    <div class="item ${p.status === '成約済み' ? 'sold' : ''}" ${url ? `data-url="${escapeHtml(url)}"` : ''}>
+    <div class="item ${p.status === '成約済み' ? 'sold' : ''}" ${itemAttrs}>
       <div class="item-badges">
         <span class="badge ${siteClass}">${escapeHtml(p.site)}</span>
         <span class="badge ${typeClass}">${escapeHtml(typeLabel)}</span>
@@ -960,6 +1071,7 @@ function render() {
       <div class="item-meta">🕐 ${new Date(p.received_at).toLocaleDateString('ja-JP')}</div>
       <div class="item-actions">
         <button class="btn-heart" onclick="toggleFavorite('${id}', event)">${p.favorite ? '❤️' : '🤍'}</button>
+        ${isHomes ? `<button class="btn-copy" onclick="copyToClipboard(this.closest('.item').dataset.copytext); event.stopPropagation();">コピー</button>` : ''}
         ${p.status !== '成約済み'
           ? `<button class="btn-sold" onclick="markSold('${id}', event)">成約</button>`
           : `<button class="btn-unsold" onclick="markUnsold('${id}', event)">解除</button>`
@@ -972,6 +1084,12 @@ function render() {
 document.getElementById('itemList').addEventListener('click', (e) => {
   const item = e.target.closest('.item');
   if (!item || e.target.closest('.item-actions')) return;
+  if (item.dataset.homes === 'true') {
+    const text = item.dataset.copytext;
+    if (text) navigator.clipboard.writeText(text).then(() => showToast("コピーしました。HOME'Sで検索してください"));
+    window.open('https://www.homes.co.jp/kodate/okinawa/', '_blank', 'noopener,noreferrer');
+    return;
+  }
   const url = item.dataset.url;
   if (url) window.open(url, '_blank', 'noopener,noreferrer');
 });
@@ -981,7 +1099,7 @@ document.querySelectorAll('[data-status]').forEach(btn => {
     document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selStatus = btn.dataset.status;
-    render();
+    onFilterChange();
   });
 });
 document.querySelectorAll('[data-site]').forEach(btn => {
@@ -989,7 +1107,7 @@ document.querySelectorAll('[data-site]').forEach(btn => {
     document.querySelectorAll('[data-site]').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     selSite = btn.dataset.site;
-    render();
+    onFilterChange();
   });
 });
 
@@ -1095,5 +1213,6 @@ async function sendContact() {
   }
 }
 </script>
+<div id="toast" class="toast"></div>
 </body>
 </html>
