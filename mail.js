@@ -27,13 +27,17 @@ function parseProperty(subject, body, from, parsed) {
       const urlMatch = block.match(/https:\/\/www\.athome\.co\.jp\/[^\s\n]+/);
       const addressMatch = block.match(/\n(.+[市町村].+)\n/);
       if (titleMatch && priceMatch) {
+        const title = titleMatch[1].trim();
+        const url = urlMatch ? urlMatch[0] : '';
+        const isRental = url.includes('/chintai/') || url.includes('/heyainfo/') ||
+          title.includes('賃貸') || block.includes('賃料') || block.includes('月額');
         properties.push({
-          title: titleMatch[1].trim(),
+          title,
           price: priceMatch[1],
           address: addressMatch ? addressMatch[1].trim() : '',
-          url: urlMatch ? urlMatch[0] : '',
+          url,
           site,
-          type: '売買',
+          type: isRental ? '賃貸' : '売買',
           status: '販売中',
           received_at: new Date().toISOString()
         });
@@ -111,24 +115,28 @@ function parseProperty(subject, body, from, parsed) {
 
     if (links.length > 0) {
       links.forEach((link, i) => {
+        const isRental = link[1].includes('/chintai') || link[1].includes('/rent');
         properties.push({
           title: link[2].trim() || `SUUMO物件${i + 1}`,
           price: prices[i] ? prices[i][1] : '',
           address: addresses[i] ? `沖縄県${addresses[i][1].trim()}` : '',
           url: link[1],
           site,
+          type: isRental ? '賃貸' : '売買',
           status: '販売中',
           received_at: new Date().toISOString()
         });
       });
     } else if (body.includes('新着')) {
       const priceMatch = body.match(/(\d+(?:\.\d+)?万円)/);
+      const isRental = subject.includes('賃貸') || body.includes('賃料') || body.includes('/chintai/');
       properties.push({
         title: subject.replace(/【ＳＵＵＭＯ[^】]*】/, '').trim(),
         price: priceMatch ? priceMatch[1] : '',
         address: '',
         url: 'https://suumo.jp/okinawa/',
         site,
+        type: isRental ? '賃貸' : '売買',
         status: '販売中',
         received_at: new Date().toISOString()
       });
@@ -152,13 +160,18 @@ async function saveToDB(property, userId) {
 
   const { data: existing } = await supabase
     .from('properties')
-    .select('id')
+    .select('id, type')
     .eq('title', property.title)
     .eq('user_id', userId)
     .limit(1);
 
   if (existing && existing.length > 0) {
-    console.log('既存物件スキップ:', property.title);
+    if (existing[0].type !== property.type) {
+      await supabase.from('properties').update({ type: property.type }).eq('id', existing[0].id);
+      console.log('タイプ修正:', property.title, existing[0].type, '->', property.type);
+    } else {
+      console.log('既存物件スキップ:', property.title);
+    }
     return;
   }
 

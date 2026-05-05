@@ -20,9 +20,24 @@ imap.once('ready', () => {
     f.on('message', msg => {
       msg.on('body', stream => {
         simpleParser(stream, (err, parsed) => {
-          const from = parsed.from ? parsed.from.text : '';
-          if (from.includes('homes') || from.includes('lifull')) {
-            console.log('HOMES発見:', parsed.subject);
+          const from = (parsed.from ? parsed.from.text : '').toLowerCase();
+          const subject = parsed.subject || '';
+          const body = parsed.text || '';
+          const html = parsed.html || '';
+
+          if (from.includes('suumo') || from.includes('recruit')) {
+            console.log('\n=== SUUMO ===');
+            console.log('件名:', subject);
+            const allUrls = [...(html.match(/https?:\/\/suumo\.jp\/[^\s"<>]+/g) || []),
+                            ...(body.match(/https?:\/\/suumo\.jp\/[^\s\n"<>]+/g) || [])];
+            console.log('URL一覧:', allUrls.slice(0, 5));
+          }
+
+          if (from.includes('athome')) {
+            console.log('\n=== アットホーム ===');
+            console.log('件名:', subject);
+            const allUrls = body.match(/https:\/\/www\.athome\.co\.jp\/[^\s\n]+/g) || [];
+            console.log('URL一覧:', allUrls.slice(0, 5));
           }
         });
       });
