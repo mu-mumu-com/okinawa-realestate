@@ -102,23 +102,25 @@ function parseProperty(subject, body, from, parsed) {
   if (site === 'SUUMO') {
     const htmlBody = parsed && parsed.html ? parsed.html : '';
     const linkMatches = htmlBody.matchAll(/href="(https?:\/\/suumo\.jp\/[^"]+)"[^>]*>([^<]+)<\/a>/g);
-    const priceMatches = body.matchAll(/(\d+(?:\.\d+)?万円)/g);
     const addressMatches = body.matchAll(/沖縄県([^\n\r]+)/g);
 
     const links = [...linkMatches].filter(m =>
-      (m[1].includes('/ms/') || m[1].includes('/jj/') || m[1].includes('/chintai/')) &&
+      (m[1].includes('/ms/') || m[1].includes('/jj/') || m[1].includes('/chintai')) &&
       !m[2].includes('登録') && !m[2].includes('停止') && !m[2].includes('探す') &&
       m[2].trim().length > 3
     );
-    const prices = [...priceMatches];
     const addresses = [...addressMatches];
 
     if (links.length > 0) {
       links.forEach((link, i) => {
+        // URLの位置を基準に前後のHTMLから価格を抽出（インデックスズレ対策）
+        const urlPos = htmlBody.indexOf(link[1]);
+        const segment = urlPos >= 0 ? htmlBody.substring(Math.max(0, urlPos - 300), urlPos + 1000) : '';
+        const priceMatch = segment.match(/(\d[\d,]*(?:\.\d+)?万円)/);
         const isRental = link[1].includes('/chintai') || link[1].includes('/rent');
         properties.push({
           title: link[2].trim() || `SUUMO物件${i + 1}`,
-          price: prices[i] ? prices[i][1] : '',
+          price: priceMatch ? priceMatch[1] : '',
           address: addresses[i] ? `沖縄県${addresses[i][1].trim()}` : '',
           url: link[1],
           site,
@@ -128,7 +130,7 @@ function parseProperty(subject, body, from, parsed) {
         });
       });
     } else if (body.includes('新着')) {
-      const priceMatch = body.match(/(\d+(?:\.\d+)?万円)/);
+      const priceMatch = body.match(/(\d[\d,]*(?:\.\d+)?万円)/);
       const isRental = subject.includes('賃貸') || body.includes('賃料') || body.includes('/chintai/');
       properties.push({
         title: subject.replace(/【ＳＵＵＭＯ[^】]*】/, '').trim(),
@@ -160,15 +162,18 @@ async function saveToDB(property, userId) {
 
   const { data: existing } = await supabase
     .from('properties')
-    .select('id, type')
+    .select('id, type, price')
     .eq('title', property.title)
     .eq('user_id', userId)
     .limit(1);
 
   if (existing && existing.length > 0) {
-    if (existing[0].type !== property.type) {
-      await supabase.from('properties').update({ type: property.type }).eq('id', existing[0].id);
-      console.log('タイプ修正:', property.title, existing[0].type, '->', property.type);
+    const updates = {};
+    if (existing[0].type !== property.type) updates.type = property.type;
+    if (property.price && existing[0].price !== property.price) updates.price = property.price;
+    if (Object.keys(updates).length > 0) {
+      await supabase.from('properties').update(updates).eq('id', existing[0].id);
+      console.log('更新:', property.title, updates);
     } else {
       console.log('既存物件スキップ:', property.title);
     }
