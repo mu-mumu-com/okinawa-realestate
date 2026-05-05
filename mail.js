@@ -112,19 +112,36 @@ function parseProperty(subject, body, from, parsed) {
     const addresses = [...addressMatches];
 
     if (links.length > 0) {
-      links.forEach((link, i) => {
-        // URLの位置を基準に前後のHTMLから価格を抽出（インデックスズレ対策）
-        const urlPos = htmlBody.indexOf(link[1]);
-        const segment = urlPos >= 0 ? htmlBody.substring(Math.max(0, urlPos - 300), urlPos + 1000) : '';
-        const priceMatch = segment.match(/(\d[\d,]*(?:\.\d+)?万円)/);
-        const isRental = link[1].includes('/chintai') || link[1].includes('/rent');
+      // 賃貸と売買を分けて処理
+      const rentalLinks = links.filter(l => l[1].includes('/chintai') || l[1].includes('/rent'));
+      const saleLinks = links.filter(l => !l[1].includes('/chintai') && !l[1].includes('/rent'));
+
+      // 賃貸: リンクテキストに価格が含まれている（例: "5万円　安里"）
+      rentalLinks.forEach(link => {
+        const priceMatch = link[2].match(/(\d[\d,]*(?:\.\d+)?万円)/);
+        properties.push({
+          title: link[2].trim(),
+          price: priceMatch ? priceMatch[1] : '',
+          address: '',
+          url: link[1],
+          site,
+          type: '賃貸',
+          status: '販売中',
+          received_at: new Date().toISOString()
+        });
+      });
+
+      // 売買: 本文から100万円以上の価格のみ抽出してインデックスマッチ
+      const salePrices = [...body.matchAll(/(\d[\d,]*(?:\.\d+)?万円)/g)]
+        .filter(m => parseFloat(m[1].replace(/,/g, '')) >= 100);
+      saleLinks.forEach((link, i) => {
         properties.push({
           title: link[2].trim() || `SUUMO物件${i + 1}`,
-          price: priceMatch ? priceMatch[1] : '',
+          price: salePrices[i] ? salePrices[i][1] : '',
           address: addresses[i] ? `沖縄県${addresses[i][1].trim()}` : '',
           url: link[1],
           site,
-          type: isRental ? '賃貸' : '売買',
+          type: '売買',
           status: '販売中',
           received_at: new Date().toISOString()
         });
