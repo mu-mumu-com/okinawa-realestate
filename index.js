@@ -2,15 +2,10 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 const cron = require('node-cron');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const Stripe = require('stripe');
 
-const contactTransporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 const { encrypt, decrypt } = require('./crypto-utils');
 
 const app = express();
@@ -263,14 +258,14 @@ app.post('/api/contact', async (req, res) => {
   }
   contactLastRun[email] = now;
   try {
-    await contactTransporter.sendMail({
-      from: `"沖縄不動産まとめ" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: process.env.GMAIL_USER,
       subject: `[お問い合わせ] ${subject}`,
       text: `お名前: ${name}\nメール: ${email}\n件名: ${subject}\n\n${message}`
     });
-    await contactTransporter.sendMail({
-      from: `"沖縄不動産まとめ" <${process.env.GMAIL_USER}>`,
+    await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: email,
       subject: '【自動返信】お問い合わせを受け付けました',
       text: `${name} 様\n\nお問い合わせいただきありがとうございます。\n内容を確認後、ご返信いたします。\n\n---\n件名: ${subject}\n\n${message}\n---\n\n沖縄不動産まとめ`
