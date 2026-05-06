@@ -9,7 +9,7 @@ const contactTransporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
   secure: false,
-  auth: { user: 'okinawa.realestate.notify@gmail.com', pass: process.env.CONTACT_GMAIL_PASS }
+  auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASS }
 });
 const { encrypt, decrypt } = require('./crypto-utils');
 
@@ -264,13 +264,13 @@ app.post('/api/contact', async (req, res) => {
   contactLastRun[email] = now;
   try {
     await contactTransporter.sendMail({
-      from: '"沖縄不動産まとめ" <okinawa.realestate.notify@gmail.com>',
-      to: 'okinawa.realestate.notify@gmail.com',
+      from: `"沖縄不動産まとめ" <${process.env.GMAIL_USER}>`,
+      to: process.env.GMAIL_USER,
       subject: `[お問い合わせ] ${subject}`,
       text: `お名前: ${name}\nメール: ${email}\n件名: ${subject}\n\n${message}`
     });
     await contactTransporter.sendMail({
-      from: '"沖縄不動産まとめ" <okinawa.realestate.notify@gmail.com>',
+      from: `"沖縄不動産まとめ" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: '【自動返信】お問い合わせを受け付けました',
       text: `${name} 様\n\nお問い合わせいただきありがとうございます。\n内容を確認後、ご返信いたします。\n\n---\n件名: ${subject}\n\n${message}\n---\n\n沖縄不動産まとめ`
