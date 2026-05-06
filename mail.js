@@ -131,13 +131,19 @@ function parseProperty(subject, body, from, parsed) {
         });
       });
 
-      // 売買: 本文から100万円以上の価格のみ抽出してインデックスマッチ
-      const salePrices = [...body.matchAll(/(\d[\d,]*(?:\.\d+)?万円)/g)]
+      // 売買: HTMLからリンク位置の直後にある最初の100万円以上の価格を取得
+      const allSalePrices = [...htmlBody.matchAll(/(\d[\d,]*(?:\.\d+)?万円)/g)]
         .filter(m => parseFloat(m[1].replace(/,/g, '')) >= 100);
+      const usedPriceIndices = new Set();
       saleLinks.forEach((link, i) => {
+        const afterLink = allSalePrices
+          .map((m, idx) => ({ ...m, idx }))
+          .filter(m => !usedPriceIndices.has(m.idx) && m.index > link.index)
+          .sort((a, b) => a.index - b.index)[0];
+        if (afterLink) usedPriceIndices.add(afterLink.idx);
         properties.push({
           title: link[2].trim() || `SUUMO物件${i + 1}`,
-          price: salePrices[i] ? salePrices[i][1] : '',
+          price: afterLink ? afterLink[1] : '',
           address: addresses[i] ? `沖縄県${addresses[i][1].trim()}` : '',
           url: link[1],
           site,
